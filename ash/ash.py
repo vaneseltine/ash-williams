@@ -1,4 +1,5 @@
 ﻿import re
+from itertools import chain
 from pathlib import Path
 
 from pypdf import PdfReader
@@ -18,19 +19,31 @@ DOI_PATTERNS = [
 ]
 
 
-def run_cli() -> None:
-    PDF_DIR = Path("C:/Users/vanes/Dropbox (University of Michigan)/zotero")
+def pdf_to_dois(path) -> list[str]:
+    text = pdf_to_text(path)
+    dois = text_to_dois(text)
+    return dois
 
-    reader = PdfReader(PDF_DIR / "Weeden_2023_Crisis.pdf")
 
+def pdf_to_text(path: Path) -> str:
+    reader = PdfReader(path)
     complete_text = "\n".join(
         page.extract_text() for i, page in enumerate(reader.pages)
     )
-    # print(complete_text)
-    for pattern in DOI_PATTERNS:
-        print(pattern)
-        matches = pattern.findall(complete_text)
-        print(matches)
+    return complete_text
+
+
+def text_to_dois(text: str) -> list[str]:
+    matches = [pattern.findall(text) for pattern in DOI_PATTERNS]
+    dois = list(chain.from_iterable(matches))
+    return dois
+
+
+def run_cli() -> None:
+    PDF_DIR = Path("C:/Users/vanes/Dropbox (University of Michigan)/zotero")
+    pdf = PDF_DIR / "Weeden_2023_Crisis.pdf"
+    dois = pdf_to_dois(pdf)
+    print(dois)
 
 
 if __name__ == "__main__":

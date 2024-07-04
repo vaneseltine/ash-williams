@@ -1,5 +1,6 @@
 # For ash we will want to think about test protocols
 *.pdf
+data/*
 
 # Some substantial exclusions here:
 __*/

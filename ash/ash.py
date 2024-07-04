@@ -4,6 +4,14 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
+DATA_DIR = Path(__file__).parent.parent / "data"
+
+try:
+    RETRACTION_WATCH_CSV = list(DATA_DIR.glob("*.csv"))[-1]
+    print(RETRACTION_WATCH_CSV)
+except (FileNotFoundError, IndexError) as err:
+    raise FileNotFoundError(f"Could not find a CSV in {DATA_DIR}") from err
+
 # https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 CROSSREF_PATTERNS = [
     r"10.\d{4,9}/[-._;()/:A-Z0-9]+",
@@ -19,7 +27,7 @@ DOI_PATTERNS = [
 ]
 
 
-def pdf_to_dois(path) -> list[str]:
+def pdf_to_dois(path: Path) -> list[str]:
     text = pdf_to_text(path)
     dois = text_to_dois(text)
     return dois
@@ -27,9 +35,7 @@ def pdf_to_dois(path) -> list[str]:
 
 def pdf_to_text(path: Path) -> str:
     reader = PdfReader(path)
-    complete_text = "\n".join(
-        page.extract_text() for i, page in enumerate(reader.pages)
-    )
+    complete_text = "\n".join(page.extract_text() for page in reader.pages)
     return complete_text
 
 

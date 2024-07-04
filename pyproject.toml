@@ -1,0 +1,104 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ash"
+version = "0.0.1"
+authors = [{ name = "Matt VanEseltine", email = "matvan@umich.edu" }]
+dynamic = ["dependencies", "readme"]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Environment :: Console",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Natural Language :: English",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+]
+license = { file = "LICENSE" }
+description = "Hunting Deadites in the references"
+keywords = ["science"]
+requires-python = ">=3.12"
+
+[project.scripts]
+ash = "ash:run_cli"
+
+[project.urls]
+Homepage = "https://github.com/vaneseltine/ash"
+Repository = "https://github.com/vaneseltine/ash"
+Issues = "https://github.com/vaneseltine/ash/issues"
+
+[tool.coverage.run]
+omit = ["*/__*.py"]
+branch = true
+
+[tool.coverage.report]
+exclude_also = [
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "if T.TYPE_CHECKING",
+    "raise NotImplementedError",
+]
+
+[tool.coverage.html]
+directory = "build/coverage"
+
+[tool.isort]
+profile = "black"
+
+[tool.pylint.miscellaneous]
+notes = ["FIXME", "XXX", "TODO"]
+
+[tool.pylint."messages control"]
+disable = [
+    "line-too-long",                 # handled by black
+    "too-few-public-methods",        # no, using classes as plugins currently
+    "too-many-instance-attributes",  # wat
+    "too-many-arguments",            # go away
+    "too-many-locals",               # no u
+    "fixme",                         # covered elsewhere
+    "logging-fstring-interpolation", # WRONG
+    "missing-docstring",             # yes yes
+    "empty-docstring",               # yes yes yes
+    "too-many-lines",                # leav eme alone
+]
+
+[tool.pylint.reports]
+output-format = "colorized"
+
+[tool.pyright]
+ignore = ["**/_*", "test/*"]
+pythonPlatform = "All"
+typeCheckingMode = "strict"
+deprecateTypingAliases = true
+reportCallInDefaultInitializer = true
+# reportImplicitOverride = true
+reportImplicitStringConcatenation = true
+reportImportCycles = true
+# reportMissingSuperCall = true # excessive for me
+reportPropertyTypeMismatch = true
+reportShadowedImports = true
+reportUninitializedInstanceVariable = true
+reportUnnecessaryTypeIgnoreComment = false # sometimes disagrees with vscode builtin
+reportUnusedCallResult = true
+
+[tool.pytest.ini_options]
+filterwarnings = "ignore::DeprecationWarning"
+log_cli = "False"
+log_cli_level = "DEBUG"
+markers = [
+    "vault: requires the complete PDF vault (deselect with '-m \"not fish\"')",
+]
+python_files = ["test_*.py"]
+python_functions = ["t_*", "test_*", "issue*"]
+testpaths = ["test"]
+
+[tool.setuptools]
+packages = ["ash"]
+
+[tool.setuptools.dynamic]
+readme = { file = ["README.md"] }
+dependencies = { file = ["requirements.txt"] }

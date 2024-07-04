@@ -1,0 +1,9 @@
+black
+# coveralls
+coverage
+nox
+pylint
+pyright
+pytest
+pytest-randomly
+# pytest-watcher

@@ -1,0 +1,60 @@
+# For ash we will want to think about test protocols
+# *.pdf
+
+# Some substantial exclusions here:
+__*/
+.*/
+__test*
+.*#
+
+# But keep various CI-related items
+!.circleci/
+!.builds/
+!.github/
+
+
+# Standardish directories
+_build/
+build/
+develop-eggs/
+dist/
+eggs/
+htmlcov/
+lib/
+lib64/
+log/
+parts/
+prof/
+sdist/
+temp/
+var/
+
+# Standardish extensions
+*.code-workspace
+*.coverage
+.coverage.*
+coverage.xml
+.coveralls*
+*.cprof
+*.egg
+*.egg-info
+*.env
+*.log
+*.patch
+*.pickle
+*.py[cod]
+*.so
+*.swp
+
+# Miscellany
+.DS_Store
+.installed.cfg
+Desktop.ini
+pip-log.txt
+wily-*
+
+# Big lumps we should not need
+*.html
+*.xls
+*.xlsx
+*.csv

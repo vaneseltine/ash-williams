@@ -2,9 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from ash.ash import pdf_to_dois
+from ash.ash import Paper
 
-VAULT = Path(__file__).parent / "pdfs"
+VAULT = Path(__file__).parent / "vault"
 
 
 def path_from_vault(path) -> Path:
@@ -20,6 +20,7 @@ PDF_DOIS = {
         "10.1146/annurev-soc-090221-035954",
         "10.1177/0038038519853146",
         "10.1016/j.socscimed.2016.08.004",
+        "10.7298/PKWJ-GM89",
     }
 }
 
@@ -28,4 +29,5 @@ PDF_DOIS = {
 
 @pytest.mark.parametrize("filename, dois", PDF_DOIS.items())
 def test_vault(filename, dois):
-    assert set(pdf_to_dois(path_from_vault(filename))) == set(dois)
+    paper = Paper(path_from_vault(filename))
+    assert set(paper.dois) == set(dois)

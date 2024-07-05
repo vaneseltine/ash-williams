@@ -21,7 +21,20 @@ PDF_DOIS = {
         "10.1177/0038038519853146",
         "10.1016/j.socscimed.2016.08.004",
         "10.7298/PKWJ-GM89",
-    }
+    },
+    "42-1-orig_article_Cagney.pdf": {
+        "10.1016/S0140-6736(14)60921-1",
+        "10.1016/S0140-6736(14)62216-9",
+        "10.1016/S0140-6736(15)00342-6",
+        "10.1016/S0140-6736(16)00041-6",
+        "10.1016/S2213-2600(14)70125-0",
+        "10.1016/S2213-2600(14)70141-9.113",
+        "10.1016/S2213-2600(15)00005-3",
+        "10.1016/S2213-2600(15)00007-7",
+        "10.1038/478026a",
+        "10.1087/20110208",
+        "10.3109/08039488.2012.761401",
+    },
 }
 
 # pdf_doi_pairs = [(fn, doi) for fn, dois in PDF_DOIS.items() for doi in dois]
@@ -34,9 +47,18 @@ def test_vault(filename, dois):
 
 
 @pytest.mark.xfail(reason="Need to check for line breaks")
-def test_line_break_mid_doi_in_pdf():
+def test_line_break_shortens_doi_in_pdf():
     """
     We get 10.3390/v130 instead
     """
     paper = Paper(path_from_vault("10.3389.fcvm.2021.745758.pdf"))
     assert "10.3390/v13040700" in paper.dois
+
+
+@pytest.mark.xfail(reason="Line breaks again")
+def test_line_break_obscures_doi_in_pdf():
+    """
+    This one isn't detected
+    """
+    paper = Paper(path_from_vault("42-1-orig_article_Cagney.pdf"))
+    assert "10.1016/S0140-6736(14)61033-3" in paper.dois

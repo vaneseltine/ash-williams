@@ -1,5 +1,6 @@
 ﻿import csv
 import re
+from collections import defaultdict
 from collections.abc import Collection
 from enum import Enum, auto
 from itertools import chain
@@ -39,6 +40,15 @@ MY_DUMB_PATTERNS = []
 DOI_PATTERNS = [
     re.compile(s, flags=re.IGNORECASE) for s in CROSSREF_PATTERNS + MY_DUMB_PATTERNS
 ]
+BAD_DOIS = ["", "unavailable", "Unavailable"]
+DOI_FIXES = {
+    "10.1177/ 0020720920940575": "10.1177/0020720920940575",
+}
+
+
+def clean_doi(s: str) -> str:
+    s = DOI_FIXES.get(s, s)
+    return s.strip(". /")
 
 
 class RetractionDatabase:
@@ -52,17 +62,13 @@ class RetractionDatabase:
     defaultdict instead?
     """
 
-    BAD_DOIS = ["", "unavailable", "Unavailable"]
-    DOI_FIXES = {
-        "10.1177/ 0020720920940575": "10.1177/0020720920940575",
-    }
-
     def __init__(self, path: Path) -> None:
         self.path = path
-        self._data: dict[str, dict[str, str]] = {}
+        # self._data: dict[str, dict[str, str]] = {}
+        self._data: defaultdict[str, list[dict[str, str]]] = defaultdict(list)
 
     @property
-    def data(self) -> dict[str, dict[str, str]]:
+    def data(self) -> defaultdict[str, list[dict[str, str]]]:
         if len(self._data) == 0:
             self._build_data()
             self.validate_dois(self.dois)
@@ -79,10 +85,15 @@ class RetractionDatabase:
             print(reader.fieldnames)
             for row in reader:
                 raw_doi = row.get("OriginalPaperDOI", "")
-                doi = self.DOI_FIXES.get(raw_doi, raw_doi)
-                if doi in self.BAD_DOIS:
+                doi = clean_doi(raw_doi)
+                if doi in BAD_DOIS:
                     continue
-                self._data[doi] = {str(k): str(v) for k, v in row.items()}
+                row_dict = {str(k): str(v) for k, v in row.items()}
+                self._data[doi].append(row_dict)
+        import json
+
+        _ = ARCHIVE_JSON.write_text(json.dumps(self._data))
+
         import random
 
         print(random.choice(list(self._data.values())))
@@ -105,6 +116,8 @@ class Paper:
     }
 
     def __init__(self, path: Path, filetype: FileType | None = None) -> None:
+        if not path.exists():
+            raise FileNotFoundError(path)
         self.path = path
         self.filetype = filetype or self.suffix_to_filetype[path.suffix.lower()]
         self.dois = self.extract_dois(self.path)
@@ -124,27 +137,32 @@ class Paper:
     def text_to_dois(text: str) -> list[str]:
         matches = [pattern.findall(text) for pattern in DOI_PATTERNS]
         dois = list(chain.from_iterable(matches))
-        return dois
+        clean_dois = [clean_doi(doi) for doi in dois]
+        return clean_dois
 
     def report(self, db: RetractionDatabase) -> None:
         zombies: list[str] = []
         for doi in self.dois:
-            mark = "✔️"
-            comment = ""
-            if doi in db.dois:
-                zombies.append(doi)
-                mark = "❌"
+            zombie = doi in db.dois
+            mark = " " if zombie else "✔️"
+            print(f"{mark} {doi}")
+            if not zombie:
+                continue
+            zombies.append(doi)
+            for rw_record in db.data[doi]:
                 comment = " ".join(
                     (
+                        "  ❌",
                         "-",
-                        db.data[doi]["RetractionNature"],
+                        rw_record["RetractionNature"],
                         "-",
-                        db.data[doi]["RetractionDate"],
+                        rw_record["RetractionDate"],
                         "-",
-                        "see https://doi.org/" + db.data[doi]["RetractionDOI"],
+                        "see https://doi.org/" + rw_record["RetractionDOI"],
                     )
                 )
-            print(f"{mark} {doi} {comment}")
+                print(comment)
+
         for doi in zombies:
             print(db.data[doi])
 
@@ -153,14 +171,17 @@ def run_cli() -> None:
     retraction_db = RetractionDatabase(RETRACTION_WATCH_CSV)
     print(len(retraction_db.dois))
     # https://www.frontiersin.org/journals/cardiovascular-medicine/articles/10.3389/fcvm.2021.745758/full?s=09
-    sample_pdf = (
-        Path(__file__).parent.parent / "test/vault/10.3389.fcvm.2021.745758.pdf"
-    )
-    sample = Paper(sample_pdf)
-    print(sample.dois)
-    sample.report(retraction_db)
 
-    print("10.1016/S0140-6736(20)32656-8" in retraction_db.dois)
+    for filename in [
+        "10.3389.fcvm.2021.745758.pdf",
+        "42-1-orig_article_Cagney.pdf",
+    ]:
+        sample = Paper(Path(__file__).parent.parent / "test" / "vault" / filename)
+        # print(sample.dois)
+        print(filename)
+        sample.report(retraction_db)
+
+    # print("10.1016/S0140-6736(20)32656-8" in retraction_db.dois)
 
 
 if __name__ == "__main__":

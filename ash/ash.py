@@ -49,24 +49,33 @@ class RetractionDatabase:
 
     def __init__(self, path: Path) -> None:
         self.path = path
-        self._dois: set[str] = set()
+        self._data: dict[str, dict[str, str]] = {}
+
+    @property
+    def data(self) -> dict[str, dict[str, str]]:
+        if len(self._data) == 0:
+            self._build_data()
+            self.validate_dois(self.dois)
+        return self._data
 
     @property
     def dois(self) -> set[str]:
-        if not self._dois:
-            self._dois = self._build_dois()
-            self.validate_dois(self._dois)
-        return self._dois
+        return set(self.data.keys())
 
-    def _build_dois(self) -> set[str]:
+    def _build_data(self) -> None:
         print(f"Loading retraction database from {self.path.absolute()}...")
         with self.path.open(encoding="utf8", errors="backslashreplace") as csvfile:
             reader = csv.DictReader(csvfile)
-            raw_dois = [row.get("OriginalPaperDOI", "") for row in reader]
-        good_dois = set(self.DOI_FIXES.get(doi, doi) for doi in raw_dois)
-        proper_dois = set(doi for doi in good_dois if doi not in self.BAD_DOIS)
-        print(f"... {len(proper_dois):,} retraction DOIs loaded.")
-        return proper_dois
+            print(reader.fieldnames)
+            for row in reader:
+                raw_doi = row.get("OriginalPaperDOI", "")
+                doi = self.DOI_FIXES.get(raw_doi, raw_doi)
+                if doi in self.BAD_DOIS:
+                    continue
+                self._data[doi] = {str(k): str(v) for k, v in row.items()}
+        import random
+
+        print(random.choice(list(self._data.values())))
 
     def validate_dois(self, dois: Collection[str]) -> None:
         for doi in dois:
@@ -107,19 +116,30 @@ class Paper:
         dois = list(chain.from_iterable(matches))
         return dois
 
-    def report(self, retracted_dois: Collection[str]) -> None:
+    def report(self, db: RetractionDatabase) -> None:
+        zombies: list[str] = []
         for doi in self.dois:
-            mark = " X"[doi in retracted_dois]
+            mark = "✔️"
+            if doi in db.dois:
+                zombies.append(doi)
+                mark = "❌"
             print(f"{mark} {doi}")
+        for doi in zombies:
+            print(db.data[doi])
 
 
 def run_cli() -> None:
     retraction_db = RetractionDatabase(RETRACTION_WATCH_CSV)
     print(len(retraction_db.dois))
-    sample_pdf = Path(__file__).parent.parent / "test/vault/Weeden_2023_Crisis.pdf"
+    # https://www.frontiersin.org/journals/cardiovascular-medicine/articles/10.3389/fcvm.2021.745758/full?s=09
+    sample_pdf = (
+        Path(__file__).parent.parent / "test/vault/10.3389.fcvm.2021.745758.pdf"
+    )
     sample = Paper(sample_pdf)
     print(sample.dois)
-    sample.report(retraction_db.dois)
+    sample.report(retraction_db)
+
+    print("10.1016/S0140-6736(20)32656-8" in retraction_db.dois)
 
 
 if __name__ == "__main__":

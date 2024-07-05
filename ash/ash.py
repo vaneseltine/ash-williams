@@ -7,6 +7,8 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
+from .config import DATA_DIR
+
 
 class FileType(Enum):
     DOC = auto()
@@ -16,11 +18,13 @@ class FileType(Enum):
     RDF = auto()
 
 
-DATA_DIR = Path(__file__).parent.parent / "data"
+ARCHIVE_JSON = DATA_DIR / "current_retraction_watch.json"
+
+LOCAL_DATA_DIR = Path(__file__).parent.parent / "data"
 try:
-    RETRACTION_WATCH_CSV = list(DATA_DIR.glob("*.csv"))[-1]
+    RETRACTION_WATCH_CSV = list(LOCAL_DATA_DIR.glob("*.csv"))[-1]
 except (FileNotFoundError, IndexError) as err:
-    raise FileNotFoundError(f"Could not find a CSV in {DATA_DIR}") from err
+    raise FileNotFoundError(f"Could not find a CSV in {LOCAL_DATA_DIR}") from err
 
 # https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 CROSSREF_PATTERNS = [
@@ -40,6 +44,12 @@ DOI_PATTERNS = [
 class RetractionDatabase:
     """
     Lazily load the DB.
+
+    TODO - we are clobbering multiple records of retraction/concern
+
+    This should probably actually have
+        doi: [{rw_entry}, {rw_entry}]
+    defaultdict instead?
     """
 
     BAD_DOIS = ["", "unavailable", "Unavailable"]
@@ -120,10 +130,21 @@ class Paper:
         zombies: list[str] = []
         for doi in self.dois:
             mark = "✔️"
+            comment = ""
             if doi in db.dois:
                 zombies.append(doi)
                 mark = "❌"
-            print(f"{mark} {doi}")
+                comment = " ".join(
+                    (
+                        "-",
+                        db.data[doi]["RetractionNature"],
+                        "-",
+                        db.data[doi]["RetractionDate"],
+                        "-",
+                        "see https://doi.org/" + db.data[doi]["RetractionDOI"],
+                    )
+                )
+            print(f"{mark} {doi} {comment}")
         for doi in zombies:
             print(db.data[doi])
 

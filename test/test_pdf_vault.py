@@ -31,3 +31,12 @@ PDF_DOIS = {
 def test_vault(filename, dois):
     paper = Paper(path_from_vault(filename))
     assert set(paper.dois) == set(dois)
+
+
+@pytest.mark.xfail(reason="Need to check for line breaks")
+def test_line_break_mid_doi_in_pdf():
+    """
+    We get 10.3390/v130 instead
+    """
+    paper = Paper(path_from_vault("10.3389.fcvm.2021.745758.pdf"))
+    assert "10.3390/v13040700" in paper.dois

@@ -107,6 +107,11 @@ class Paper:
         dois = list(chain.from_iterable(matches))
         return dois
 
+    def report(self, retracted_dois: Collection[str]) -> None:
+        for doi in self.dois:
+            mark = " X"[doi in retracted_dois]
+            print(f"{mark} {doi}")
+
 
 def run_cli() -> None:
     retraction_db = RetractionDatabase(RETRACTION_WATCH_CSV)
@@ -114,6 +119,7 @@ def run_cli() -> None:
     sample_pdf = Path(__file__).parent.parent / "test/vault/Weeden_2023_Crisis.pdf"
     sample = Paper(sample_pdf)
     print(sample.dois)
+    sample.report(retraction_db.dois)
 
 
 if __name__ == "__main__":

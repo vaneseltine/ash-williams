@@ -1,4 +1,6 @@
 ﻿import csv
+import json
+import random
 import re
 from collections import defaultdict
 from collections.abc import Collection
@@ -90,11 +92,8 @@ class RetractionDatabase:
                     continue
                 row_dict = {str(k): str(v) for k, v in row.items()}
                 self._data[doi].append(row_dict)
-        import json
 
         _ = ARCHIVE_JSON.write_text(json.dumps(self._data))
-
-        import random
 
         print(random.choice(list(self._data.values())))
 
@@ -152,8 +151,7 @@ class Paper:
             for rw_record in db.data[doi]:
                 comment = " ".join(
                     (
-                        "  ❌",
-                        "-",
+                        "  ❗",
                         rw_record["RetractionNature"],
                         "-",
                         rw_record["RetractionDate"],

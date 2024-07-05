@@ -37,13 +37,24 @@ This could be a web app, sure, but we could start with just a binder/colab noteb
 
 https://doi.org/10.13003/c23rw1d9
 
-https://api.labs.crossref.org/data/retractionwatch?name@email.org
+## CSV
+
+https://api.labs.crossref.org/data/retractionwatch?matvan@umich.edu
+
+It's 44 MB so not enormous but not an insignificant amount to deal with.
 
 We could maybe just include the raw DOIs in the package, how big is that?
 
-- Eh, no, because we want to report the RW info as well.
-- We could alternatively hit the Crossref API with DOIs in hand
-- But, again, they haven't actually built the RW data into the API as far as I know
+- Nnnnnn, well, we want to report the RW info as well.
+
+## API
+
+We could alternatively hit the Crossref API with DOIs in hand
+
+Is this stable?
+- https://api.labs.crossref.org/works/10.1016/S0140-6736(14)60921-1?mailto=matvan@umich.edu
+- https://api.labs.crossref.org/works/10.1016/S2213-2600(14)70125-0?mailto=matvan@umich.edu (cited in Cagney)
+
 
 # Discussion of citation practice & policy
 

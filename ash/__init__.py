@@ -2,6 +2,6 @@
 
 import importlib.metadata
 
-from .ash import run_cli
+from .ash import Paper, RetractionDatabase, run_cli
 
 __version__ = importlib.metadata.version("ash")

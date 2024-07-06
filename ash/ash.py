@@ -21,14 +21,6 @@ class FileType(Enum):
     RDF = auto()
 
 
-ARCHIVE_JSON = DATA_DIR / "current_retraction_watch.json"
-
-LOCAL_DATA_DIR = Path(__file__).parent.parent / "data"
-try:
-    RETRACTION_WATCH_CSV = list(LOCAL_DATA_DIR.glob("*.csv"))[-1]
-except (FileNotFoundError, IndexError) as err:
-    raise FileNotFoundError(f"Could not find a CSV in {LOCAL_DATA_DIR}") from err
-
 # https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 CROSSREF_PATTERNS = [
     r"10.\d{4,9}/[-._;()/:A-Z0-9]+",
@@ -93,7 +85,7 @@ class RetractionDatabase:
                 row_dict = {str(k): str(v) for k, v in row.items()}
                 self._data[doi].append(row_dict)
 
-        _ = ARCHIVE_JSON.write_text(json.dumps(self._data))
+        # _ = ARCHIVE_JSON.write_text(json.dumps(self._data))
 
         print(random.choice(list(self._data.values())))
 
@@ -166,6 +158,15 @@ class Paper:
 
 
 def run_cli() -> None:
+
+    ARCHIVE_JSON = DATA_DIR / "current_retraction_watch.json"
+
+    LOCAL_DATA_DIR = Path(__file__).parent.parent / "data"
+    try:
+        RETRACTION_WATCH_CSV = list(LOCAL_DATA_DIR.glob("*.csv"))[-1]
+    except (FileNotFoundError, IndexError) as err:
+        raise FileNotFoundError(f"Could not find a CSV in {LOCAL_DATA_DIR}") from err
+
     retraction_db = RetractionDatabase(RETRACTION_WATCH_CSV)
     print(len(retraction_db.dois))
     # https://www.frontiersin.org/journals/cardiovascular-medicine/articles/10.3389/fcvm.2021.745758/full?s=09

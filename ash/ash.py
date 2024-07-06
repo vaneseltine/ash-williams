@@ -48,12 +48,6 @@ def clean_doi(s: str) -> str:
 class RetractionDatabase:
     """
     Lazily load the DB.
-
-    TODO - we are clobbering multiple records of retraction/concern
-
-    This should probably actually have
-        doi: [{rw_entry}, {rw_entry}]
-    defaultdict instead?
     """
 
     def __init__(self, path: Path) -> None:

@@ -2,6 +2,11 @@
 *.pdf
 data/*
 
+# Big lumps we should not need
+*.xls
+*.xlsx
+*.csv
+
 # Some substantial exclusions here:
 __*/
 .*/
@@ -53,9 +58,3 @@ coverage.xml
 Desktop.ini
 pip-log.txt
 wily-*
-
-# Big lumps we should not need
-*.html
-*.xls
-*.xlsx
-*.csv

@@ -5,10 +5,13 @@ import re
 from collections import defaultdict
 from collections.abc import Collection
 from enum import Enum, auto
+from io import BufferedReader
 from itertools import chain
 from pathlib import Path
+from typing import Any
 
 from pypdf import PdfReader
+from werkzeug.datastructures import FileStorage
 
 from .config import DATA_DIR
 
@@ -100,21 +103,28 @@ class Paper:
         ".rdf": FileType.RDF,
     }
 
-    def __init__(self, path: Path, filetype: FileType | None = None) -> None:
+    def __init__(
+        self, data: BufferedReader | FileStorage, filetype: FileType | None = None
+    ) -> None:
+        self.filetype = filetype
+        self.dois = self.extract_dois(data)
+
+    @classmethod
+    def from_path(cls, path: Path, filetype: FileType | None = None) -> "Paper":
         if not path.exists():
             raise FileNotFoundError(path)
-        self.path = path
-        self.filetype = filetype or self.suffix_to_filetype[path.suffix.lower()]
-        self.dois = self.extract_dois(self.path)
+        filetype = filetype or cls.suffix_to_filetype.get(path.suffix.lower())
+        with path.open("rb") as stream:
+            return cls(stream)
 
-    def extract_dois(self, path: Path) -> list[str]:
-        text = self.pdf_to_text(path)
+    def extract_dois(self, data: BufferedReader) -> list[str]:
+        text = self.pdf_to_text(data)
         dois = self.text_to_dois(text)
         return dois
 
     @staticmethod
-    def pdf_to_text(path: Path) -> str:
-        reader = PdfReader(path)
+    def pdf_to_text(data: BufferedReader) -> str:
+        reader = PdfReader(data)
         complete_text = "\n".join(page.extract_text() for page in reader.pages)
         return complete_text
 
@@ -150,18 +160,21 @@ class Paper:
         for doi in zombies:
             print(db.data[doi])
 
+    def json_report(self, db: RetractionDatabase) -> dict[str, Any]:
+        return {doi: doi in db.dois for doi in self.dois}
+
 
 def run_cli() -> None:
 
-    ARCHIVE_JSON = DATA_DIR / "current_retraction_watch.json"
+    # ARCHIVE_JSON = DATA_DIR / "current_retraction_watch.json"
 
-    LOCAL_DATA_DIR = Path(__file__).parent.parent / "data"
-    try:
-        RETRACTION_WATCH_CSV = list(LOCAL_DATA_DIR.glob("*.csv"))[-1]
-    except (FileNotFoundError, IndexError) as err:
-        raise FileNotFoundError(f"Could not find a CSV in {LOCAL_DATA_DIR}") from err
+    # LOCAL_DATA_DIR = Path(__file__).parent.parent / "data"
+    # try:
+    #     RETRACTION_WATCH_CSV = list(LOCAL_DATA_DIR.glob("*.csv"))[-1]
+    # except (FileNotFoundError, IndexError) as err:
+    #     raise FileNotFoundError(f"Could not find a CSV in {LOCAL_DATA_DIR}") from err
 
-    retraction_db = RetractionDatabase(RETRACTION_WATCH_CSV)
+    retraction_db = RetractionDatabase(Path("./data/retraction-watch-2024-07-04.csv"))
     print(len(retraction_db.dois))
     # https://www.frontiersin.org/journals/cardiovascular-medicine/articles/10.3389/fcvm.2021.745758/full?s=09
 
@@ -169,7 +182,8 @@ def run_cli() -> None:
         "10.3389.fcvm.2021.745758.pdf",
         "42-1-orig_article_Cagney.pdf",
     ]:
-        sample = Paper(Path(__file__).parent.parent / "test" / "vault" / filename)
+        path = Path(__file__).parent.parent / "test" / "vault" / filename
+        sample = Paper.from_path(path)
         # print(sample.dois)
         print(filename)
         sample.report(retraction_db)

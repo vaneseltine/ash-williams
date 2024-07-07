@@ -1,5 +1,4 @@
 ﻿import csv
-import json
 import random
 import re
 from collections import defaultdict
@@ -13,7 +12,7 @@ from typing import Any
 from pypdf import PdfReader
 from werkzeug.datastructures import FileStorage
 
-from .config import DATA_DIR
+# from .config import DATA_DIR
 
 
 class FileType(Enum):
@@ -117,14 +116,14 @@ class Paper:
         with path.open("rb") as stream:
             return cls(stream)
 
-    def extract_dois(self, data: BufferedReader) -> list[str]:
+    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
         text = self.pdf_to_text(data)
         dois = self.text_to_dois(text)
         return dois
 
     @staticmethod
-    def pdf_to_text(data: BufferedReader) -> str:
-        reader = PdfReader(data)
+    def pdf_to_text(data: BufferedReader | FileStorage) -> str:
+        reader = PdfReader(stream=data)  # type: ignore -- it takes FileStorage fine
         complete_text = "\n".join(page.extract_text() for page in reader.pages)
         return complete_text
 
@@ -135,7 +134,7 @@ class Paper:
         clean_dois = [clean_doi(doi) for doi in dois]
         return clean_dois
 
-    def report(self, db: RetractionDatabase) -> None:
+    def printout(self, db: RetractionDatabase) -> None:
         zombies: list[str] = []
         for doi in self.dois:
             zombie = doi in db.dois
@@ -160,8 +159,19 @@ class Paper:
         for doi in zombies:
             print(db.data[doi])
 
-    def json_report(self, db: RetractionDatabase) -> dict[str, Any]:
-        return {doi: doi in db.dois for doi in self.dois}
+    def report(self, db: RetractionDatabase) -> dict[str, Any]:
+        all_dois = {doi: (doi in db.dois) for doi in self.dois}
+        zombies = [doi for doi in self.dois if doi in db.dois]
+        zombie_report = [
+            {
+                "Item": record["RetractionNature"],
+                "Date": record["RetractionDate"],
+                "Notice DOI": f"https://doi.org/{record.get('RetractionDOI')}",
+            }
+            for doi in zombies
+            for record in db.data[doi]
+        ]
+        return {"dois": all_dois, "zombies": zombie_report}
 
 
 def run_cli() -> None:
@@ -186,7 +196,7 @@ def run_cli() -> None:
         sample = Paper.from_path(path)
         # print(sample.dois)
         print(filename)
-        sample.report(retraction_db)
+        print(sample.report(retraction_db))
 
     # print("10.1016/S0140-6736(20)32656-8" in retraction_db.dois)
 

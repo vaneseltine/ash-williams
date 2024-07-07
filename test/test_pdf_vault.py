@@ -37,8 +37,6 @@ PDF_DOIS = {
     },
 }
 
-# pdf_doi_pairs = [(fn, doi) for fn, dois in PDF_DOIS.items() for doi in dois]
-
 
 @pytest.mark.parametrize("filename, dois", PDF_DOIS.items())
 def test_vault(filename, dois):
@@ -58,7 +56,7 @@ def test_line_break_shortens_doi_in_pdf():
 @pytest.mark.xfail(reason="Line breaks again")
 def test_line_break_obscures_doi_in_pdf():
     """
-    This one isn't detected
+    This one isn't detected at all
     """
     paper = Paper(path_from_vault("42-1-orig_article_Cagney.pdf"))
     assert "10.1016/S0140-6736(14)61033-3" in paper.dois

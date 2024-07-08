@@ -36,11 +36,13 @@ var/
 .coverage.*
 coverage.xml
 .coveralls*
+*.bak
 *.cprof
 *.egg
 *.egg-info
 *.env
 *.log
+*.logXX
 *.patch
 *.pickle
 *.py[cod]

@@ -1,6 +1,7 @@
 ﻿import csv
 import random
 import re
+import zipfile
 from abc import abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Collection
@@ -10,6 +11,7 @@ from mimetypes import guess_type
 from pathlib import Path
 from pprint import pprint
 from typing import Any, Protocol
+from xml.etree.ElementTree import XML
 
 from pypdf import PdfReader
 from werkzeug.datastructures import FileStorage
@@ -191,23 +193,50 @@ class PDFHandler(MIMEHandler):
         return text_to_dois(complete_text)
 
 
-@Paper.register_handler("application/rtf")
+@Paper.register_handler("application/rtf")  # .rtf on Linux
+@Paper.register_handler("application/msword")  # .rtf on Windows
+class RTFHandler(MIMEHandler):
+
+    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
+        raise NotImplementedError("Have not implemented RTF")
+
+
 @Paper.register_handler(
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 )
 class DOCXHandler(MIMEHandler):
+    WORD_NAMESPACE = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    PARA = WORD_NAMESPACE + "p"
+    TEXT = WORD_NAMESPACE + "t"
 
     def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
-        raise NotImplementedError("Haven't implemented DOCX yet.")
+
+        document = zipfile.ZipFile(data)
+        xml_content = document.read("word/document.xml")
+        document.close()
+        tree = XML(xml_content)
+
+        paragraphs: list[str] = []
+        for paragraph in tree.iter(self.PARA):
+            texts = [node.text for node in paragraph.iter(self.TEXT) if node.text]
+            if texts:
+                paragraphs.append("".join(texts))
+        result = "\n\n".join(paragraphs)
+        print("docx", result)
+        return text_to_dois(result)
 
 
 @Paper.register_handler("text/plain")
 @Paper.register_handler("application/x-latex")
-@Paper.register_handler("text/x-tex")
+@Paper.register_handler("text/x-tex")  # .tex on Linux
+@Paper.register_handler("application/x-tex")  # .tex on Windows
 class PlainTextHandler(MIMEHandler):
 
     def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
-        raise NotImplementedError("Haven't implemented text yet.")
+        first_read = data.read()
+        if isinstance(first_read, str):
+            return text_to_dois(first_read)
+        return text_to_dois(first_read.decode("utf-8"))
 
 
 def run_cli() -> None:
@@ -224,21 +253,26 @@ def run_cli() -> None:
     print(len(retraction_db.dois))
     # https://www.frontiersin.org/journals/cardiovascular-medicine/articles/10.3389/fcvm.2021.745758/full?s=09
 
-    for filename in [
-        # "10.3389.fcvm.2021.745758.pdf",
-        # "42-1-orig_article_Cagney.pdf",
-        "basic_doi_url.pdf",
-        "basic_doi_url.txt",
-    ]:
-        path = Path(__file__).parent.parent / "test" / "vault" / filename
-        sample = Paper.from_path(path)
-        # print(sample.dois)
-        print()
-        print(filename)
-        pprint(sample.report(retraction_db))
+    # for filename in [
+    #     # "10.3389.fcvm.2021.745758.pdf",
+    #     # "42-1-orig_article_Cagney.pdf",
+    #     "basic_doi_url.pdf",
+    #     "basic_doi_url.txt",
+    # ]:
+    #     path = Path(__file__).parent.parent / "test" / "vault" / filename
+    #     sample = Paper.from_path(path)
+    #     # print(sample.dois)
+    #     print()
+    #     print(filename)
+    #     pprint(sample.report(retraction_db))
 
     # print("10.1016/S0140-6736(20)32656-8" in retraction_db.dois)
-    print("10.21105/joss.03440", text_to_dois("soadifja 10.21105/joss.03440 soiadjf"))
+
+    from io import StringIO
+
+    filelike = StringIO("soadifja 10.21105/joss.03440 soiadjf")
+    print(Paper(filelike, "text/plain").dois)
+    # print("10.21105/joss.03440", text_to_dois())
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ from enum import Enum, auto
 from io import BufferedReader
 from itertools import chain
 from pathlib import Path
+from pprint import pprint
 from typing import Any
 
 from pypdf import PdfReader
@@ -61,7 +62,7 @@ class RetractionDatabase:
     def data(self) -> defaultdict[str, list[dict[str, str]]]:
         if len(self._data) == 0:
             self._build_data()
-            self.validate_dois(self.dois)
+            self._validate_dois(self.dois)
         return self._data
 
     @property
@@ -85,16 +86,16 @@ class RetractionDatabase:
 
         print(random.choice(list(self._data.values())))
 
-    def validate_dois(self, dois: Collection[str]) -> None:
+    def _validate_dois(self, dois: Collection[str]) -> None:
         for doi in dois:
-            if any(Paper.text_to_dois(doi)):
+            if any(Paper._text_to_dois(doi)):
                 continue
             print(f"Warning, DOI does not match regex patterns: {doi}")
 
 
 class Paper:
 
-    suffix_to_filetype = {
+    _suffix_to_filetype = {
         ".doc": FileType.DOC,
         ".docx": FileType.DOCX,
         ".text": FileType.TEXT,
@@ -106,29 +107,29 @@ class Paper:
         self, data: BufferedReader | FileStorage, filetype: FileType | None = None
     ) -> None:
         self.filetype = filetype
-        self.dois = self.extract_dois(data)
+        self.dois = self._extract_dois(data)
 
     @classmethod
     def from_path(cls, path: Path, filetype: FileType | None = None) -> "Paper":
         if not path.exists():
             raise FileNotFoundError(path)
-        filetype = filetype or cls.suffix_to_filetype.get(path.suffix.lower())
+        filetype = filetype or cls._suffix_to_filetype.get(path.suffix.lower())
         with path.open("rb") as stream:
             return cls(stream)
 
-    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
-        text = self.pdf_to_text(data)
-        dois = self.text_to_dois(text)
+    def _extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
+        text = self._pdf_to_text(data)
+        dois = self._text_to_dois(text)
         return dois
 
     @staticmethod
-    def pdf_to_text(data: BufferedReader | FileStorage) -> str:
+    def _pdf_to_text(data: BufferedReader | FileStorage) -> str:
         reader = PdfReader(stream=data)  # type: ignore -- it takes FileStorage fine
         complete_text = "\n".join(page.extract_text() for page in reader.pages)
         return complete_text
 
     @staticmethod
-    def text_to_dois(text: str) -> list[str]:
+    def _text_to_dois(text: str) -> list[str]:
         matches = [pattern.findall(text) for pattern in DOI_PATTERNS]
         dois = list(chain.from_iterable(matches))
         clean_dois = [clean_doi(doi) for doi in dois]
@@ -161,9 +162,12 @@ class Paper:
 
     def report(self, db: RetractionDatabase) -> dict[str, Any]:
         all_dois = {doi: (doi in db.dois) for doi in self.dois}
-        zombies = [doi for doi in self.dois if doi in db.dois]
+        zombies = sorted(
+            [doi for doi in self.dois if doi in db.dois], key=lambda x: x[1]
+        )
         zombie_report = [
             {
+                "Zombie": doi,
                 "Item": record["RetractionNature"],
                 "Date": record["RetractionDate"],
                 "Notice DOI": f"https://doi.org/{record.get('RetractionDOI')}",
@@ -195,8 +199,9 @@ def run_cli() -> None:
         path = Path(__file__).parent.parent / "test" / "vault" / filename
         sample = Paper.from_path(path)
         # print(sample.dois)
+        print()
         print(filename)
-        print(sample.report(retraction_db))
+        pprint(sample.report(retraction_db))
 
     # print("10.1016/S0140-6736(20)32656-8" in retraction_db.dois)
 

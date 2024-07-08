@@ -1,14 +1,23 @@
+from mimetypes import guess_type
+
 import pytest
-from xdg import Mime
 
 
 @pytest.mark.parametrize(
     "path, mime",
     [
-        ("pyproject.toml", "toml"),
-        ("test/vault/Weeden_2023_Crisis.pdf", "pdf"),
-        ("test/vault/10.3389.fcvm.2021.745758.pdf", "pdf"),
+        ("basic_doi_colon_pdf_without_suffix", None),
+        ("basic_doi_colon.pdf", "application/pdf"),
+        (
+            "basic_doi_colon.docx",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ),
+        ("basic_doi_colon.rtf", "application/rtf"),
+        ("basic_doi_colon.txt", "text/plain"),
+        ("basic_doi_colon.latex", "application/x-latex"),
+        ("basic_doi_colon.tex", "text/x-tex"),
     ],
 )
 def test_whether_mimes_work(path, mime):
-    assert Mime.get_type2(path).subtype == mime
+    guessed_mime, _ = guess_type(path)
+    assert guessed_mime == mime

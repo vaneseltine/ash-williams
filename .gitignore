@@ -1,13 +1,8 @@
 # For ash we will want to think about test protocols
 __vault*
 test/vault
-*.pdf
 data/*
 
-# Big lumps we should not need
-*.xls
-*.xlsx
-*.csv
 
 # Some substantial exclusions here:
 __*/

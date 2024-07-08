@@ -38,48 +38,12 @@ DOI_FIXES = {
 }
 
 
-def clean_doi(s: str) -> str:
-    s = DOI_FIXES.get(s, s)
-    return s.strip(". /")
-
-
-def path_to_mime_type(path: str | Path) -> str:
-    """
-    We will usually expect to have the path available, and so we can use the builtin
-    mimetypes to crosswalk the suffix to the MIME. However, if there is no suffix,
-    we should be able to infer it using the magic numbers instead.
-    """
-    guessed_mime, _ = mimetypes.guess_type(path)
-    if not guessed_mime:
-        return binary_mime_check(path)
-    return guessed_mime
-
-
-@log_this
-def binary_mime_check(obj: Any) -> str:
-    """
-    Use filetype.guess, but it doesn't recognize .txt, .tex, or .latex.
-
-    Currently filetype has incorrect typing.
-    """
-    kind = filetype.guess(obj)  # type: ignore
-    if kind is None:
-        raise TypeError(f"Could not determine MIME type of {obj}")
-    return kind.mime
-
-
-def text_to_dois(text: str) -> list[str]:
-    matches = [pattern.findall(text) for pattern in DOI_PATTERNS]
-    dois = list(chain.from_iterable(matches))
-    clean_dois = [clean_doi(doi) for doi in dois]
-    return clean_dois
-
-
 class RetractionDatabase:
     """
     Lazily load the DB.
     """
 
+    @log_this
     def __init__(self, path: Path) -> None:
         self.path = path
         # self._data: dict[str, dict[str, str]] = {}
@@ -110,8 +74,6 @@ class RetractionDatabase:
                 self._data[doi].append(row_dict)
 
         # _ = ARCHIVE_JSON.write_text(json.dumps(self._data))
-
-        print(random.choice(list(self._data.values())))
 
     def _validate_dois(self, dois: Collection[str]) -> None:
         for doi in dois:
@@ -264,6 +226,44 @@ class PlainTextHandler(MIMEHandler):
         return text_to_dois(first_read.decode("utf-8"))
 
 
+@log_this
+def path_to_mime_type(path: str | Path) -> str:
+    """
+    We will usually expect to have the path available, and so we can use the builtin
+    mimetypes to crosswalk the suffix to the MIME. However, if there is no suffix,
+    we should be able to infer it using the magic numbers instead.
+    """
+    guessed_mime, _ = mimetypes.guess_type(path)
+    if not guessed_mime:
+        return binary_mime_check(path)
+    return guessed_mime
+
+
+@log_this
+def binary_mime_check(obj: Any) -> str:
+    """
+    Use filetype.guess, but it doesn't recognize .txt, .tex, or .latex.
+
+    Currently filetype has incorrect typing.
+    """
+    kind = filetype.guess(obj)  # type: ignore
+    if kind is None:
+        raise TypeError(f"Could not determine MIME type of {obj}")
+    return kind.mime
+
+
+def text_to_dois(text: str) -> list[str]:
+    matches = [pattern.findall(text) for pattern in DOI_PATTERNS]
+    dois = list(chain.from_iterable(matches))
+    clean_dois = [clean_doi(doi) for doi in dois]
+    return clean_dois
+
+
+def clean_doi(s: str) -> str:
+    s = DOI_FIXES.get(s, s)
+    return s.strip(". /")
+
+
 def run_cli() -> None:
 
     # ARCHIVE_JSON = DATA_DIR / "current_retraction_watch.json"
@@ -278,20 +278,7 @@ def run_cli() -> None:
     print(len(retraction_db.dois))
     # https://www.frontiersin.org/journals/cardiovascular-medicine/articles/10.3389/fcvm.2021.745758/full?s=09
 
-    # for filename in [
-    #     # "10.3389.fcvm.2021.745758.pdf",
-    #     # "42-1-orig_article_Cagney.pdf",
-    #     "basic_doi_url.pdf",
-    #     "basic_doi_url.txt",
-    # ]:
-    #     path = Path(__file__).parent.parent / "test" / "vault" / filename
-    #     sample = Paper.from_path(path)
-    #     # print(sample.dois)
-    #     print()
-    #     print(filename)
-    #     pprint(sample.report(retraction_db))
-
-    # print("10.1016/S0140-6736(20)32656-8" in retraction_db.dois)
+    print("10.1016/S0140-6736(20)32656-8" in retraction_db.dois)
 
     string_io = StringIO("soadifja 10.21105/joss.03440 soiadjf")
     paper = Paper(string_io, "text/plain")

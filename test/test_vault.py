@@ -74,10 +74,7 @@ class TestMinimal:
         ],
     )
     def test_minimal_documents(self, vault, filename):
-        try:
-            paper = Paper.from_path(vault[filename])
-        except NotImplementedError:
-            pytest.xfail("Not implemented")
+        paper = Paper.from_path(vault[filename])
         assert set(paper.dois) == {"10.21105/joss.03440"}
 
     def test_minimal_documents_no_suffix(self, vault):

@@ -171,9 +171,7 @@ class Paper:
 
     def report(self, db: RetractionDatabase) -> dict[str, Any]:
         all_dois = {doi: (doi in db.dois) for doi in self.dois}
-        zombies = sorted(
-            [doi for doi in self.dois if doi in db.dois], key=lambda x: x[1]
-        )
+        zombies = sorted([doi for doi in self.dois if doi in db.dois])
         zombie_report = [
             {
                 "Zombie": doi,

@@ -198,6 +198,11 @@ class PDFHandler(MIMEHandler):
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 )
 class DOCXHandler(MIMEHandler):
+    """
+    Adapted from https://etienned.github.io/posts/extract-text-from-word-docx-simply/
+    Heavyier solution if this fails: https://github.com/python-openxml/python-docx
+    """
+
     WORD_NAMESPACE = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
     PARA = WORD_NAMESPACE + "p"
     TEXT = WORD_NAMESPACE + "t"

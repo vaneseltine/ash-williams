@@ -9,7 +9,7 @@ Eventually, in approximately this order:
 - [x] PDF (ideally generated from multiple sources) - pypdf
 - [x] DOCX - builtin xml (PPTX too?) https://stackoverflow.com/a/20663596/7846185
 - [x] Text (covers TEX, BIB, etc) - no conversion required
-- [ ] RTF (fourth format PNAS accepts) - https://github.com/joshy/striprtf standalone
+- [x] RTF (fourth format PNAS accepts) - https://github.com/joshy/striprtf standalone
 
 If we're adding dependencies, we should maybe lazy load required libraries
 or have as optional on install.
@@ -52,7 +52,8 @@ We could maybe just include the raw DOIs in the package, how big is that?
 
 We could alternatively hit the Crossref API with DOIs in hand
 
-Is this stable?
+- No, they prefer we instead pull down in bulk so we don't hit repeatedly
+- Could consider going from the Crossref end rather than the RW CSV however?
 
 - https://api.labs.crossref.org/works/10.1016/S0140-6736(14)60921-1?mailto=matvan@umich.edu
 - https://api.labs.crossref.org/works/10.1016/S2213-2600(14)70125-0?mailto=matvan@umich.edu (cited in Cagney)

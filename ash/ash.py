@@ -14,6 +14,7 @@ from typing import Any, Protocol
 from xml.etree.ElementTree import XML
 
 from pypdf import PdfReader
+from striprtf.striprtf import rtf_to_text
 from werkzeug.datastructures import FileStorage
 
 from .config import log_this
@@ -193,14 +194,6 @@ class PDFHandler(MIMEHandler):
         return text_to_dois(complete_text)
 
 
-@Paper.register_handler("application/rtf")  # .rtf on Linux
-@Paper.register_handler("application/msword")  # .rtf on Windows
-class RTFHandler(MIMEHandler):
-
-    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
-        raise NotImplementedError("Have not implemented RTF")
-
-
 @Paper.register_handler(
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 )
@@ -224,6 +217,16 @@ class DOCXHandler(MIMEHandler):
         result = "\n\n".join(paragraphs)
         print("docx", result)
         return text_to_dois(result)
+
+
+@Paper.register_handler("application/rtf")  # .rtf on Linux
+@Paper.register_handler("application/msword")  # .rtf on Windows
+class RTFHandler(MIMEHandler):
+
+    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
+        ingested_rtf = data.read().decode()
+        text: str = rtf_to_text(ingested_rtf)  # type: ignore
+        return text_to_dois(text)  # type: ignore
 
 
 @Paper.register_handler("text/plain")

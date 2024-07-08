@@ -19,11 +19,13 @@ from .config import log_this
 class RetractionDatabase:
     """
     Lazily load the DB.
+
+    TODO: Cache path -> data so people don't have to use this object directly.
     """
 
     @log_this
-    def __init__(self, path: Path) -> None:
-        self.path = path
+    def __init__(self, path: Path | str) -> None:
+        self.path = Path(path)
         self._data: defaultdict[str, list[dict[str, str]]] = defaultdict(list)
 
     @property
@@ -77,7 +79,9 @@ class Paper:
         with path.open("rb") as stream:
             return cls(stream, mime_type)
 
-    def report(self, db: RetractionDatabase) -> dict[str, Any]:
+    def report(self, db: RetractionDatabase | Path | str) -> dict[str, Any]:
+        if isinstance(db, (Path, str)):
+            db = RetractionDatabase(db)
         all_dois = {doi: (doi in db.dois) for doi in self.dois}
         zombies = sorted([doi for doi in self.dois if doi in db.dois])
         zombie_report = [

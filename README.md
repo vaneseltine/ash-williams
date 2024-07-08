@@ -1,22 +1,33 @@
 # ash
 
-Hunting Deadites in the references
+Hunting Deadites in the references.
 
-# Formats
+This is a work heavily in progress. It will be soon be available via:
 
-Eventually, in approximately this order:
+```
+python -m pip install ash-williams
+```
+
+And a simple use looks like:
+
+```python
+from ash import Paper
+paper = Paper("sample.pdf")
+print(paper.report(db="./retraction_watch.csv"))
+```
+
+# Notes
+
+## Formats
 
 - [x] PDF (ideally generated from multiple sources) - pypdf
 - [x] DOCX - builtin xml (PPTX too?) https://stackoverflow.com/a/20663596/7846185
 - [x] Text (covers TEX, BIB, etc) - no conversion required
 - [x] RTF (fourth format PNAS accepts) - https://github.com/joshy/striprtf standalone
 
-If we're adding dependencies, we should maybe lazy load required libraries
-or have as optional on install.
-
 Microsoft Word DOC has been obsolete since 2007, so we aren't supporting it.
 
-# Reporting
+## Reporting
 
 Do we want to give...
 
@@ -30,25 +41,16 @@ Do we want to give...
   - RetractionDOI
   - RetractionReasons?
 
-# Demo
+## Demo
 
-This could be a web app, sure, but we could start with just a binder/colab notebook.
+- [ ] Server in separate repository (in progress)
+- [ ] Binder/colab notebook for easy Python sampling
 
-# Retraction Watch via Crossref
+## Retraction Watch via Crossref
 
-https://doi.org/10.13003/c23rw1d9
+Per the official Crossref announcement -- https://doi.org/10.13003/c23rw1d9 -- to download the latest data snapshot (~44 MB as of Jul 2024), add your email address to: api.labs.crossref.org/data/retractionwatch?youremailhere@example.com
 
-## CSV
-
-https://api.labs.crossref.org/data/retractionwatch?matvan@umich.edu
-
-It's 44 MB so not enormous but not an insignificant amount to deal with.
-
-We could maybe just include the raw DOIs in the package, how big is that?
-
-- Nnnnnn, well, we want to report the RW info as well.
-
-## API
+### API
 
 We could alternatively hit the Crossref API with DOIs in hand
 
@@ -58,7 +60,7 @@ We could alternatively hit the Crossref API with DOIs in hand
 - https://api.labs.crossref.org/works/10.1016/S0140-6736(14)60921-1?mailto=matvan@umich.edu
 - https://api.labs.crossref.org/works/10.1016/S2213-2600(14)70125-0?mailto=matvan@umich.edu (cited in Cagney)
 
-# Discussion of citation practice & policy
+## Discussion of citation practice & policy
 
 COPE Case number 15-17, "Citing a retracted paper," https://publicationethics.org/case/citing-retracted-paper:
 

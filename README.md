@@ -1,6 +1,6 @@
 # ash
 
-Hunting Deadites in the references.
+Hunting the [evil dead](https://www.science.org/content/article/zombie-papers-wont-die-retracted-papers-notorious-fraudster-still-cited-years-later) in the scientific literature.
 
 This is a work heavily in progress. It will be soon be available via:
 
@@ -48,7 +48,7 @@ Do we want to give...
 
 ## Retraction Watch via Crossref
 
-Per the official Crossref announcement -- https://doi.org/10.13003/c23rw1d9 -- to download the latest data snapshot (~44 MB as of Jul 2024), add your email address to: api.labs.crossref.org/data/retractionwatch?youremailhere@example.com
+Per the official Crossref announcement -- https://doi.org/10.13003/c23rw1d9 -- to download the latest data snapshot (~44 MB as of Jul 2024), add your email address to the following: api.labs.crossref.org/data/retractionwatch?youremailhere@example.com
 
 ### API
 

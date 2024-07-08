@@ -1,4 +1,5 @@
 # For ash we will want to think about test protocols
+__vault*
 test/vault
 *.pdf
 data/*

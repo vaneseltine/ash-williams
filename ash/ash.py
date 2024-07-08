@@ -209,9 +209,8 @@ class DOCXHandler(MIMEHandler):
 
     def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
 
-        document = zipfile.ZipFile(data)
-        xml_content = document.read("word/document.xml")
-        document.close()
+        with zipfile.ZipFile(data) as document:
+            xml_content = document.read("word/document.xml")
         tree = XML(xml_content)
 
         paragraphs: list[str] = []

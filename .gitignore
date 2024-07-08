@@ -1,16 +1,14 @@
 # For ash we will want to think about test protocols
 __vault*
-test/vault
 data/*
-
 
 # Some substantial exclusions here:
 __*/
-.*/
 __test*
-.*#
+.*
 
-# But keep various CI-related items
+# But keep various git and CI items
+!.gitignore
 !.circleci/
 !.builds/
 !.github/

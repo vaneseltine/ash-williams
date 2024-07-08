@@ -20,10 +20,10 @@ except ImportError:
 
 @pytest.fixture(scope="session")
 def vault():
-    vault_files = list(VAULT_DIR.glob("*"))
     if not VAULT_AVAILABLE:
         pytest.xfail(reason="Vault unavailable for testing.")
         return
+    vault_files = list(VAULT_DIR.glob("*"))
     return {path.name: path for path in vault_files}
 
 

@@ -24,7 +24,8 @@ print(paper.report(db="./retraction_watch.csv"))
 - [x] DOCX extracts
 - [x] Text extracts
 - [x] RTF extracts
-- [ ] Consider
+- [ ] Address partial DOI extracts from PDF split text fields
+- [ ] Consider DOI validation to improve accurate extraction
 
 ## Live validation of DOI
 

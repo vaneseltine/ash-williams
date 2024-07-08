@@ -40,7 +40,7 @@ PDF_DOIS = {
 
 @pytest.mark.parametrize("filename, dois", PDF_DOIS.items())
 def test_vault(filename, dois):
-    paper = Paper(path_from_vault(filename))
+    paper = Paper.from_path(path_from_vault(filename))
     assert set(paper.dois) == set(dois)
 
 
@@ -49,7 +49,7 @@ def test_line_break_shortens_doi_in_pdf():
     """
     We get 10.3390/v130 instead
     """
-    paper = Paper(path_from_vault("10.3389.fcvm.2021.745758.pdf"))
+    paper = Paper.from_path(path_from_vault("10.3389.fcvm.2021.745758.pdf"))
     assert "10.3390/v13040700" in paper.dois
 
 
@@ -58,5 +58,5 @@ def test_line_break_obscures_doi_in_pdf():
     """
     This one isn't detected at all
     """
-    paper = Paper(path_from_vault("42-1-orig_article_Cagney.pdf"))
+    paper = Paper.from_path(path_from_vault("42-1-orig_article_Cagney.pdf"))
     assert "10.1016/S0140-6736(14)61033-3" in paper.dois

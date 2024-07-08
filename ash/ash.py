@@ -1,28 +1,20 @@
 ﻿import csv
 import random
 import re
+from abc import abstractmethod
 from collections import defaultdict
-from collections.abc import Collection
-from enum import Enum, auto
+from collections.abc import Callable, Collection
 from io import BufferedReader
 from itertools import chain
+from mimetypes import guess_type
 from pathlib import Path
 from pprint import pprint
-from typing import Any
+from typing import Any, Protocol
 
 from pypdf import PdfReader
 from werkzeug.datastructures import FileStorage
 
-# from .config import DATA_DIR
-
-
-class FileType(Enum):
-    DOC = auto()
-    DOCX = auto()
-    TEXT = auto()
-    PDF = auto()
-    RDF = auto()
-
+from .config import log_this
 
 # https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 CROSSREF_PATTERNS = [
@@ -46,6 +38,20 @@ DOI_FIXES = {
 def clean_doi(s: str) -> str:
     s = DOI_FIXES.get(s, s)
     return s.strip(". /")
+
+
+def path_to_mime_type(path: str | Path) -> str:
+    guessed_mime, _ = guess_type(path)
+    if not guessed_mime:
+        raise TypeError(f"Could not determine MIME type of {path}")
+    return guessed_mime
+
+
+def text_to_dois(text: str) -> list[str]:
+    matches = [pattern.findall(text) for pattern in DOI_PATTERNS]
+    dois = list(chain.from_iterable(matches))
+    clean_dois = [clean_doi(doi) for doi in dois]
+    return clean_dois
 
 
 class RetractionDatabase:
@@ -88,52 +94,34 @@ class RetractionDatabase:
 
     def _validate_dois(self, dois: Collection[str]) -> None:
         for doi in dois:
-            if any(Paper._text_to_dois(doi)):
+            if any(text_to_dois(doi)):
                 continue
             print(f"Warning, DOI does not match regex patterns: {doi}")
 
 
+class MIMEHandler(Protocol):
+
+    @abstractmethod
+    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]: ...
+
+
 class Paper:
 
-    _suffix_to_filetype = {
-        ".doc": FileType.DOC,
-        ".docx": FileType.DOCX,
-        ".text": FileType.TEXT,
-        ".pdf": FileType.PDF,
-        ".rdf": FileType.RDF,
-    }
+    _MIME_handlers: dict[str, type[MIMEHandler]] = {}
 
-    def __init__(
-        self, data: BufferedReader | FileStorage, filetype: FileType | None = None
-    ) -> None:
-        self.filetype = filetype
-        self.dois = self._extract_dois(data)
+    def __init__(self, data: BufferedReader | FileStorage, mime_type: str) -> None:
+        self.mime_type = mime_type
+        handler = self.get_handler(self.mime_type)
+        self.dois = handler.extract_dois(data)
+        # self.dois = self._extract_dois(data)
 
     @classmethod
-    def from_path(cls, path: Path, filetype: FileType | None = None) -> "Paper":
+    def from_path(cls, path: Path, mime_type: str | None = None) -> "Paper":
         if not path.exists():
             raise FileNotFoundError(path)
-        filetype = filetype or cls._suffix_to_filetype.get(path.suffix.lower())
+        mime_type = mime_type or path_to_mime_type(path)
         with path.open("rb") as stream:
-            return cls(stream)
-
-    def _extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
-        text = self._pdf_to_text(data)
-        dois = self._text_to_dois(text)
-        return dois
-
-    @staticmethod
-    def _pdf_to_text(data: BufferedReader | FileStorage) -> str:
-        reader = PdfReader(stream=data)  # type: ignore -- it takes FileStorage fine
-        complete_text = "\n".join(page.extract_text() for page in reader.pages)
-        return complete_text
-
-    @staticmethod
-    def _text_to_dois(text: str) -> list[str]:
-        matches = [pattern.findall(text) for pattern in DOI_PATTERNS]
-        dois = list(chain.from_iterable(matches))
-        clean_dois = [clean_doi(doi) for doi in dois]
-        return clean_dois
+            return cls(stream, mime_type)
 
     def printout(self, db: RetractionDatabase) -> None:
         zombies: list[str] = []
@@ -177,6 +165,50 @@ class Paper:
         ]
         return {"dois": all_dois, "zombies": zombie_report}
 
+    @classmethod
+    @log_this
+    def register_handler(
+        cls, mime_type: str
+    ) -> Callable[[type[MIMEHandler]], type[MIMEHandler]]:
+
+        def registrar_decorator(delegate: type[MIMEHandler]) -> type[MIMEHandler]:
+            cls._MIME_handlers[mime_type] = delegate
+            return delegate
+
+        return registrar_decorator
+
+    @classmethod
+    def get_handler(cls, mime_type: str) -> MIMEHandler:
+        return cls._MIME_handlers[mime_type]()
+
+
+@Paper.register_handler("application/pdf")
+class PDFHandler(MIMEHandler):
+
+    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
+        reader = PdfReader(stream=data)  # type: ignore -- it takes FileStorage fine
+        complete_text = "\n".join(page.extract_text() for page in reader.pages)
+        return text_to_dois(complete_text)
+
+
+@Paper.register_handler("application/rtf")
+@Paper.register_handler(
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+)
+class DOCXHandler(MIMEHandler):
+
+    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
+        raise NotImplementedError("Haven't implemented DOCX yet.")
+
+
+@Paper.register_handler("text/plain")
+@Paper.register_handler("application/x-latex")
+@Paper.register_handler("text/x-tex")
+class PlainTextHandler(MIMEHandler):
+
+    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
+        raise NotImplementedError("Haven't implemented text yet.")
+
 
 def run_cli() -> None:
 
@@ -193,8 +225,10 @@ def run_cli() -> None:
     # https://www.frontiersin.org/journals/cardiovascular-medicine/articles/10.3389/fcvm.2021.745758/full?s=09
 
     for filename in [
-        "10.3389.fcvm.2021.745758.pdf",
-        "42-1-orig_article_Cagney.pdf",
+        # "10.3389.fcvm.2021.745758.pdf",
+        # "42-1-orig_article_Cagney.pdf",
+        "basic_doi_url.pdf",
+        "basic_doi_url.txt",
     ]:
         path = Path(__file__).parent.parent / "test" / "vault" / filename
         sample = Paper.from_path(path)
@@ -204,6 +238,7 @@ def run_cli() -> None:
         pprint(sample.report(retraction_db))
 
     # print("10.1016/S0140-6736(20)32656-8" in retraction_db.dois)
+    print("10.21105/joss.03440", text_to_dois("soadifja 10.21105/joss.03440 soiadjf"))
 
 
 if __name__ == "__main__":

@@ -1,21 +1,21 @@
 ﻿import csv
+import mimetypes
 import random
 import re
 import zipfile
 from abc import abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Collection
-from io import BufferedReader
+from io import StringIO
 from itertools import chain
-from mimetypes import guess_type
 from pathlib import Path
 from pprint import pprint
 from typing import Any, Protocol
 from xml.etree.ElementTree import XML
 
+import filetype  # type: ignore
 from pypdf import PdfReader
 from striprtf.striprtf import rtf_to_text
-from werkzeug.datastructures import FileStorage
 
 from .config import log_this
 
@@ -44,10 +44,28 @@ def clean_doi(s: str) -> str:
 
 
 def path_to_mime_type(path: str | Path) -> str:
-    guessed_mime, _ = guess_type(path)
+    """
+    We will usually expect to have the path available, and so we can use the builtin
+    mimetypes to crosswalk the suffix to the MIME. However, if there is no suffix,
+    we should be able to infer it using the magic numbers instead.
+    """
+    guessed_mime, _ = mimetypes.guess_type(path)
     if not guessed_mime:
-        raise TypeError(f"Could not determine MIME type of {path}")
+        return binary_mime_check(path)
     return guessed_mime
+
+
+@log_this
+def binary_mime_check(obj: Any) -> str:
+    """
+    Use filetype.guess, but it doesn't recognize .txt, .tex, or .latex.
+
+    Currently filetype has incorrect typing.
+    """
+    kind = filetype.guess(obj)  # type: ignore
+    if kind is None:
+        raise TypeError(f"Could not determine MIME type of {obj}")
+    return kind.mime
 
 
 def text_to_dois(text: str) -> list[str]:
@@ -105,14 +123,14 @@ class RetractionDatabase:
 class MIMEHandler(Protocol):
 
     @abstractmethod
-    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]: ...
+    def extract_dois(self, data: Any) -> list[str]: ...
 
 
 class Paper:
 
     _MIME_handlers: dict[str, type[MIMEHandler]] = {}
 
-    def __init__(self, data: BufferedReader | FileStorage, mime_type: str) -> None:
+    def __init__(self, data: Any, mime_type: str) -> None:
         self.mime_type = mime_type
         handler = self.get_handler(self.mime_type)
         self.dois = handler.extract_dois(data)
@@ -188,7 +206,7 @@ class Paper:
 @Paper.register_handler("application/pdf")
 class PDFHandler(MIMEHandler):
 
-    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
+    def extract_dois(self, data: Any) -> list[str]:
         reader = PdfReader(stream=data)  # type: ignore -- it takes FileStorage fine
         complete_text = "\n".join(page.extract_text() for page in reader.pages)
         return text_to_dois(complete_text)
@@ -207,7 +225,7 @@ class DOCXHandler(MIMEHandler):
     PARA = WORD_NAMESPACE + "p"
     TEXT = WORD_NAMESPACE + "t"
 
-    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
+    def extract_dois(self, data: Any) -> list[str]:
 
         with zipfile.ZipFile(data) as document:
             xml_content = document.read("word/document.xml")
@@ -227,7 +245,7 @@ class DOCXHandler(MIMEHandler):
 @Paper.register_handler("application/msword")  # .rtf on Windows
 class RTFHandler(MIMEHandler):
 
-    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
+    def extract_dois(self, data: Any) -> list[str]:
         ingested_rtf = data.read().decode()
         text: str = rtf_to_text(ingested_rtf)  # type: ignore
         return text_to_dois(text)  # type: ignore
@@ -239,7 +257,9 @@ class RTFHandler(MIMEHandler):
 @Paper.register_handler("application/x-tex")  # .tex on Windows
 class PlainTextHandler(MIMEHandler):
 
-    def extract_dois(self, data: BufferedReader | FileStorage) -> list[str]:
+    def extract_dois(self, data: Any) -> list[str]:
+        if isinstance(data, str):
+            return text_to_dois(data)
         first_read = data.read()
         if isinstance(first_read, str):
             return text_to_dois(first_read)
@@ -275,10 +295,10 @@ def run_cli() -> None:
 
     # print("10.1016/S0140-6736(20)32656-8" in retraction_db.dois)
 
-    from io import StringIO
-
-    filelike = StringIO("soadifja 10.21105/joss.03440 soiadjf")
-    print(Paper(filelike, "text/plain").dois)
+    string_io = StringIO("soadifja 10.21105/joss.03440 soiadjf")
+    paper = Paper(string_io, "text/plain")
+    print(paper.dois)
+    pprint(paper.report(db=retraction_db))
     # print("10.21105/joss.03440", text_to_dois())
 
 

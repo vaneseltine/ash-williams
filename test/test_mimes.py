@@ -1,15 +1,13 @@
-from mimetypes import guess_type
-
 import pytest
 
-from ash import Paper
+from ash.ash import Paper, path_to_mime_type
 
 
 @pytest.mark.parametrize(
-    "path, mimes",
+    "filename, mimes",
     [
-        ("basic_doi_colon_pdf_without_suffix", None),
         ("basic_doi_colon.pdf", "application/pdf"),
+        ("pdf_without_suffix", "application/pdf"),
         (
             "basic_doi_colon.docx",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -20,8 +18,9 @@ from ash import Paper
         ("basic_doi_colon.tex", ("text/x-tex", "application/x-tex")),
     ],
 )
-def test_mime_implementations_are_covered(path, mimes):
-    guessed_mime, _ = guess_type(path)
+def test_mimes_detected_from_vault(vault, filename, mimes):
+    path = vault[filename]
+    guessed_mime = path_to_mime_type(path)
     assert guessed_mime == mimes or guessed_mime in mimes
     if guessed_mime is not None:
         assert guessed_mime in Paper._MIME_handlers

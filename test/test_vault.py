@@ -30,6 +30,9 @@ class TestVaultDOIs:
             "10.1087/20110208",
             "10.3109/08039488.2012.761401",
         },
+        "pdf_without_suffix": {
+            "10.21105/joss.03440",
+        },
     }
 
     @pytest.mark.parametrize("filename, dois", KNOWN.items())
@@ -77,7 +80,6 @@ class TestMinimal:
             pytest.xfail("Not implemented")
         assert set(paper.dois) == {"10.21105/joss.03440"}
 
-    @pytest.mark.xfail(reason="Haven't implemented attempts without MIME")
     def test_minimal_documents_no_suffix(self, vault):
         paper = Paper.from_path(vault["pdf_without_suffix"])
         assert set(paper.dois) == {"10.21105/joss.03440"}

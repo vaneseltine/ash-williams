@@ -1,30 +1,40 @@
 [build-system]
-requires = ["setuptools >= 61.0"]
+requires = ["setuptools >= 70.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ash"
-version = "0.0.1"
+version = "0.9.0"
 authors = [{ name = "Matt VanEseltine", email = "matvan@umich.edu" }]
 dynamic = ["dependencies", "readme"]
 classifiers = [
-    "Development Status :: 1 - Planning",
-    "Environment :: Console",
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Natural Language :: English",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Typing :: Typed",
 ]
 license = { file = "LICENSE" }
 description = "Hunting Deadites in the references"
-keywords = ["science"]
+keywords = [
+    "bibliography",
+    "citation",
+    "doi",
+    "publications",
+    "references",
+    "retraction",
+    "science",
+]
 requires-python = ">=3.12"
-
-[project.scripts]
-ash = "ash:run_cli"
 
 [project.urls]
 Homepage = "https://github.com/vaneseltine/ash"

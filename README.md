@@ -18,14 +18,111 @@ print(paper.report(db="./retraction_watch.csv"))
 
 # Notes
 
+## TODO
+
+- [x] PDF extracts
+- [x] DOCX extracts
+- [x] Text extracts
+- [x] RTF extracts
+- [ ] Consider
+
+## Live validation of DOI
+
+Valid: https://doi.org/api/handles/10.1177/0020720920940575
+
+```json
+{
+  "responseCode": 1,
+  "handle": "10.1177/0020720920940575",
+  "values": [
+    {
+      "index": 1,
+      "type": "URL",
+      "data": {
+        "format": "string",
+        "value": "http://journals.sagepub.com/doi/10.1177/0020720920940575"
+      },
+      "ttl": 86400,
+      "timestamp": "2020-07-29T04:52:30Z"
+    },
+    {
+      "index": 700050,
+      "type": "700050",
+      "data": {
+        "format": "string",
+        "value": "2020072821515400292"
+      },
+      "ttl": 86400,
+      "timestamp": "2020-07-29T04:52:30Z"
+    },
+    {
+      "index": 100,
+      "type": "HS_ADMIN",
+      "data": {
+        "format": "admin",
+        "value": {
+          "handle": "0.na/10.1177",
+          "index": 200,
+          "permissions": "111111110010"
+        }
+      },
+      "ttl": 86400,
+      "timestamp": "2020-07-29T04:52:30Z"
+    }
+  ]
+}
+```
+
+Or narrow down requested "type" but that's probably not important
+
+Valid, URL only: https://doi.org/api/handles/10.1177/0020720920940575?type=URL
+
+```json
+{
+  "responseCode": 1,
+  "handle": "10.1177/0020720920940575",
+  "values": [
+    {
+      "index": 1,
+      "type": "URL",
+      "data": {
+        "format": "string",
+        "value": "http://journals.sagepub.com/doi/10.1177/0020720920940575"
+      },
+      "ttl": 86400,
+      "timestamp": "2020-07-29T04:52:30Z"
+    }
+  ]
+}
+```
+
+Probably all that matters is we don't get the invalid response.
+
+Invalid: https://doi.org/api/handles/10.1177/5555555555555555
+
+```json
+{
+  "responseCode": 100,
+  "handle": "10.1177/5555555555555555"
+}
+```
+
+https://www.doi.org/the-identifier/resources/factsheets/doi-resolution-documentation
+
+>     Response Codes
+>
+>     1 : Success. (HTTP 200 OK)
+>     2 : Error. Something unexpected went wrong during handle resolution. (HTTP 500 Internal Server Error)
+>     100 : Handle Not Found. (HTTP 404 Not Found)
+>     200 : Values Not Found. The handle exists but has no values (or no values according to the types and indices specified). (HTTP 200 OK)
+
 ## Formats
 
-- [x] PDF (ideally generated from multiple sources) - pypdf
-- [x] DOCX - builtin xml (PPTX too?) https://stackoverflow.com/a/20663596/7846185
-- [x] Text (covers TEX, BIB, etc) - no conversion required
-- [x] RTF (fourth format PNAS accepts) - https://github.com/joshy/striprtf standalone
-
-Microsoft Word DOC has been obsolete since 2007, so we aren't supporting it.
+- PDF (ideally generated from multiple sources) - pypdf
+- DOCX - builtin xml (PPTX too?) https://stackoverflow.com/a/20663596/7846185
+- Text (covers TEX, BIB, etc) - no conversion required
+- RTF (fourth format PNAS accepts) - https://github.com/joshy/striprtf standalone
+- Microsoft Word DOC has been obsolete since 2007, so we aren't supporting it.
 
 ## Reporting
 

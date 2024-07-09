@@ -97,7 +97,6 @@ class DOI:
     @classmethod
     def _exists_at_api(cls, doi: str) -> bool | None:
         url = cls.API_URL.format(doi=doi)
-        print(http)
         resp = http.request("HEAD", url)
         existence = cls.API_RESPONSE_MAP.get(resp.status)
         logger.info(f"{doi} | {url} | {resp.status} = {existence}")
@@ -257,7 +256,6 @@ class DOCXHandler(MIMEHandler):
             if texts:
                 paragraphs.append("".join(texts))
         result = "\n\n".join(paragraphs)
-        print("docx", result)
         return text_to_dois(result)
 
 

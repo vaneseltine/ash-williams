@@ -1,12 +1,4 @@
-#! /usr/bin/env python3
-# type: ignore
 """
-Invoke via `nox` or `python -m nox`
-
-nox -k "lint"   lint only
-nox -k "test"   pytest plus coverage
-nox             everything
-
 See: https://nox.thea.codes/en/stable/cookbook.html
 """
 
@@ -16,68 +8,102 @@ import sys
 from pathlib import Path
 
 import nox
+from nox.sessions import Session
 
-nox.options.stop_on_first_error = False
 nox.options.default_venv_backend = "venv"
 nox.options.reuse_existing_virtualenvs = "yes"
+nox.options.error_on_external_run = "yes"
 
-PACKAGE_NAME = "ash"
+# Default run
+nox.options.sessions = [
+    "lint_black",
+    "lint_pylint",
+    "lint_pyright",
+    "test_pytest",
+    "test_coverage",
+    "lint_todos",
+]
+
+CODE_DIR = "ash"
 
 IN_CI = os.getenv("CI", "").lower() == "true"
 IN_WINDOWS = sys.platform.startswith("win")
 
 
-def supported_pythons(classifiers_file=Path("setup.cfg")):
+def run(session: Session, cmd: str, **kwargs):  # type: ignore
+    _ = session.run(*cmd.split(), **kwargs)  # type: ignore
+
+
+def install(session: Session, cmd: str, **kwargs):  # type: ignore
+    _ = session.install(*cmd.split(), **kwargs)  # type: ignore
+
+
+def supported_pythons(classifiers_file: str | Path = "pyproject.toml"):
     """
-    Parse all supported Python classifiers from setup.cfg
+    Parse all supported Python classifiers.
+
+    E.g., pyproject.toml including:
+
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3 :: Only",
+
+    Becomes:
+
+        ['3.12', '3.13']
+
+    Note that comments are included in this search.
     """
-    if IN_WINDOWS:
-        return None
+    # if IN_WINDOWS:
+    #     return None
     pattern = re.compile(r"Programming Language :: Python :: ([0-9]+\.[0-9.]+)")
-    return pattern.findall(classifiers_file.read_text())
+    pythons = pattern.findall(Path(classifiers_file).read_text())
+    return pythons
 
 
 @nox.session(python=False)
-def lint_black(session):
-    session.run("python", "-m", "black", ".")
+def lint_black(session: Session):
+    run(session, "python -m black .")
 
 
 @nox.session(python=False)
-def lint_pylint(session):
-    cmd = f"python -m pylint {PACKAGE_NAME} --score=no"
-    session.run(*cmd.split())
+def lint_pylint(session: Session):
+    run(session, f"python -m pylint {CODE_DIR} --score=no")
 
 
 @nox.session(python=False)
-def lint_pyright(session, subfolder=PACKAGE_NAME):
-    session.run(
-        "python",
-        "-m",
-        "pyright",
-        subfolder,
+def lint_pyright(session: Session):
+    run(
+        session,
+        f"python -m pyright {CODE_DIR}",
         env={"PYRIGHT_PYTHON_FORCE_VERSION": "latest"},  # hush
     )
 
 
-# @nox.session(python=supported_pythons(), reuse_venv=False)
 @nox.session(python=False)
-def test_pytest(session):
+def test_pytest(session: Session):
     """
     pytest-xdist can be installed to allow threaded parallel testing. But it is most
     likely that many tests will be required to compensate for the added overhead
     spinning up workers.
     """
-    # session.install("-r", "requirements-dev.txt")
-    # session.install("-e", ".")
-    cmd = ["python", "-m", "coverage", "run", "-m", "pytest"]
-    session.run(*cmd)
-    session.run("python", "-m", "coverage", "report")
+    run(session, "python -m coverage run -m pytest")
+    run(session, "python -m coverage report")
+
+
+@nox.session(python=supported_pythons(), reuse_venv=False)
+def test_pytest_multipython(session: Session):
+    install(session, "-r requirements-dev.txt")
+    install(session, "-e .")
+    run(session, "python -m coverage run -m pytest")
+    run(session, "python -m coverage report")
 
 
 @nox.session(python=False)
-def test_coverage(session):
-    # session.run("coveralls", success_codes=[0, 1]) # requires public GitHub
-    session.run("python", "-m", "coverage", "html")
+def test_coverage(session: Session):
+    # run(session, "coveralls", success_codes=[0, 1]) # requires public GitHub
+    run(session, "python -m coverage html")
 
 
 @nox.session(python=False)
@@ -88,27 +114,7 @@ def lint_todos(_):
             print(f"{file.name:>20}: {line}")
 
 
-def search_in_file(path, pattern, encoding="utf-8"):
+def search_in_file(path: Path, pattern: str, encoding: str = "utf-8"):
     text = Path(path).read_text(encoding)
     results = re.compile(pattern).findall(text)
     return [line for line, _match in results]
-
-
-# @nox.session(python=False)
-# def autopush_repo(session):
-#     if not nox.options.stop_on_first_error:
-#         session.skip("Error-free runs required")
-#     git_output = subprocess.check_output(["git", "status", "--porcelain"])
-#     if git_output:
-#         print(git_output.decode("ascii").rstrip())
-#         session.skip("Local repo is not clean")
-#     # if not AT_HOME:
-#     #     session.skip("Only from home")
-#     subprocess.check_output(["git", "push"])
-
-
-if __name__ == "__main__":
-    print(f"Invoke {__file__} by running Nox.")
-    import subprocess
-
-    subprocess.run(["nox"])

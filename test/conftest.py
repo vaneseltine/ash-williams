@@ -40,9 +40,9 @@ def full_db():
 
 
 @pytest.fixture(scope="session")
-def mock_db():
+def fake_db():
     """
-    Four rows of bad mock data from the Crossref distribution of the Retraction Watch
+    Four rows of badly faked data from the Crossref distribution of the Retraction Watch
     database. Includes the following retracted DOIs:
 
         - 10.1234/retracted12345
@@ -54,22 +54,12 @@ def mock_db():
 
 
 @pytest.fixture(scope="function")
-def mock_http_200(mocker):
-    request = mocker.patch("ash.ash.http.request")
+def mock_http(mocker, request):
+    code = request.param
 
-    mock_response = mocker.MagicMock()
-    mock_response.status = 200
-    request.return_value = mock_response
+    http_request = mocker.patch("ash.ash.http.request")
 
-    return request
-
-
-@pytest.fixture(scope="function")
-def mock_http_404(mocker):
-    request = mocker.patch("ash.ash.http.request")
-
-    mock_response = mocker.MagicMock()
-    mock_response.status = 404
-    request.return_value = mock_response
-
-    return request
+    mock_response = mocker.Mock()
+    mock_response.status = code
+    http_request.return_value = mock_response
+    return http_request

@@ -97,34 +97,24 @@ class TestPaperDOIExtraction:
 
 class TestPaperReports:
 
-    def test_report_structure_unretracted(
-        self, mock_db, mock_http_200
-    ):  # pylint: disable=unused-argument
+    @pytest.mark.parametrize("mock_http", [200], indirect=True)
+    def test_single_unret(self, fake_db, mock_http):  # pylint: disable=unused-argument
         paper = Paper(UNRETRACTED_TEXT, mime_type="text/plain")
-        report = paper.report(mock_db)
+        report = paper.report(fake_db)
         assert report["dois"][UNRETRACTED_DOI] == {
             "DOI is valid:": True,
             "Retracted:": False,
         }
 
+    @pytest.mark.parametrize("mock_http", [404], indirect=True)
     def test_report_structure_retracted(
-        self, mock_db, mock_http_404
+        self, fake_db, mock_http
     ):  # pylint: disable=unused-argument
         paper = Paper(MOCKED_RETRACTION, mime_type="text/plain")
-        report = paper.report(mock_db)
+        report = paper.report(fake_db)
         assert report["dois"][MOCKED_RETRACTION_DOI] == {
             "DOI is valid:": False,
             "Retracted:": True,
-        }
-
-    def test_single_unretracted_doi_captured(
-        self, mock_db, mock_http_200
-    ):  # pylint: disable=unused-argument
-        paper = Paper(UNRETRACTED_TEXT, mime_type="text/plain")
-        report = paper.report(mock_db)
-        assert report["dois"][UNRETRACTED_DOI] == {
-            "DOI is valid:": True,
-            "Retracted:": False,
         }
 
 
@@ -181,18 +171,17 @@ class TestDOI:
     def test_dois_regex_acceptable(self, raw):
         _ = DOI(raw)
 
-    def test_existence(self, mocker):
-        mock_http_request = mocker.patch("ash.ash.http.request")
 
-        mock_response = mocker.MagicMock()
-        mock_response.status = 200
-        mock_http_request.return_value = mock_response
+class TestAPICallsForDOI:
+
+    @pytest.mark.parametrize("mock_http", [200], indirect=True)
+    def test_existence(self, mock_http):
 
         good_doi = "10.1126/science.aax5705"
         doi = DOI(good_doi)
         exists_result = doi.exists()
 
         expected_url = "https://doi.org/api/handles/" + good_doi
-        mock_http_request.assert_called_once_with("HEAD", expected_url)
+        mock_http.assert_called_once_with("HEAD", expected_url)
 
         assert exists_result

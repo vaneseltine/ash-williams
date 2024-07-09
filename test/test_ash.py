@@ -97,7 +97,9 @@ class TestPaperDOIExtraction:
 
 class TestPaperReports:
 
-    def test_report_structure_unretracted(self, mock_db):
+    def test_report_structure_unretracted(
+        self, mock_db, mock_http_200
+    ):  # pylint: disable=unused-argument
         paper = Paper(UNRETRACTED_TEXT, mime_type="text/plain")
         report = paper.report(mock_db)
         assert report["dois"][UNRETRACTED_DOI] == {
@@ -105,7 +107,9 @@ class TestPaperReports:
             "Retracted:": False,
         }
 
-    def test_report_structure_retracted(self, mock_db):
+    def test_report_structure_retracted(
+        self, mock_db, mock_http_404
+    ):  # pylint: disable=unused-argument
         paper = Paper(MOCKED_RETRACTION, mime_type="text/plain")
         report = paper.report(mock_db)
         assert report["dois"][MOCKED_RETRACTION_DOI] == {
@@ -113,7 +117,9 @@ class TestPaperReports:
             "Retracted:": True,
         }
 
-    def test_single_unretracted_doi_captured(self, mock_db):
+    def test_single_unretracted_doi_captured(
+        self, mock_db, mock_http_200
+    ):  # pylint: disable=unused-argument
         paper = Paper(UNRETRACTED_TEXT, mime_type="text/plain")
         report = paper.report(mock_db)
         assert report["dois"][UNRETRACTED_DOI] == {

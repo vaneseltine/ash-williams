@@ -51,3 +51,25 @@ def mock_db():
         - 10.1234/retracted12345
     """
     return RetractionDatabase(MOCK_DIR / "rw_database.csv")
+
+
+@pytest.fixture(scope="function")
+def mock_http_200(mocker):
+    request = mocker.patch("ash.ash.http.request")
+
+    mock_response = mocker.MagicMock()
+    mock_response.status = 200
+    request.return_value = mock_response
+
+    return request
+
+
+@pytest.fixture(scope="function")
+def mock_http_404(mocker):
+    request = mocker.patch("ash.ash.http.request")
+
+    mock_response = mocker.MagicMock()
+    mock_response.status = 404
+    request.return_value = mock_response
+
+    return request

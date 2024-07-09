@@ -23,8 +23,7 @@ nox.options.sessions = [
     "lint_black",
     "lint_pylint",
     "lint_pyright",
-    "test_pytest",
-    "test_coverage",
+    "test_pytest_single",
     "lint_todos",
 ]
 
@@ -81,7 +80,7 @@ def lint_pyright(session: Session):
 
 
 @nox.session(python=False)
-def test_pytest(session: Session):
+def test_pytest_single(session: Session):
     """
     Simple, non-environment run with coverage.
 
@@ -89,21 +88,19 @@ def test_pytest(session: Session):
     But it takes a couple seconds just to spin up the workers, so unless testing is
     taking long enough to compensate, it's overkill.
     """
-    run(session, "python -m coverage run -m pytest --durations=5")
-    run(session, "python -m coverage report")
+    run(session, "python -m pytest --cov=ash --durations=5")
+    run(session, "python -m coverage html")
 
 
 @nox.session(python=supported_pythons(), reuse_venv=False)
 def test_pytest_multipython(session: Session):
     install(session, "-r requirements-dev.txt")
     install(session, "-e .")
-    run(session, "python -m run -m pytest")
-
-
-@nox.session(python=False)
-def test_coverage(session: Session):
-    # run(session, "coveralls", success_codes=[0, 1]) # requires public GitHub
-    run(session, "python -m coverage html")
+    run(
+        session,
+        "python -m pytest",
+        env={"PYTHONDONTWRITEBYTECODE": "1"},
+    )
 
 
 @nox.session(python=False)

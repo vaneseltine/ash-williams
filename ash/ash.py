@@ -53,7 +53,6 @@ class DOI:
     ]
 
     REGEXES = [re.compile(s, flags=re.IGNORECASE) for s in CROSSREF_PATTERNS]
-    BAD_DOIS = ["", "unavailable", "Unavailable"]
     DOI_FIXES = {
         "10.1177/ 0020720920940575": "10.1177/0020720920940575",
     }
@@ -73,13 +72,18 @@ class DOI:
 
     @classmethod
     def _validate_via_regex(cls, doi: str) -> None:
+        # Fail fast on a range of things that are obviously not dois
+        if not "/" in doi:
+            cls._report_bad_doi(doi)
+        # Slightly more slowly identify by regex
+        if not any(pattern.match(doi) for pattern in cls.REGEXES):
+            cls._report_bad_doi(doi)
+
+    @staticmethod
+    def _report_bad_doi(doi: Any) -> None:
         if not doi:
             raise BadDOIError("No DOI!")
-        if doi in cls.BAD_DOIS:
-            raise BadDOIError(f"Bad DOI: `{doi}`")
-        if any(pattern.match(doi) for pattern in cls.REGEXES):
-            return
-        raise BadDOIError(f"Bad DOI: `{doi}`")
+        raise BadDOIError(f'Bad DOI: "{doi}"')
 
     def exists(self) -> bool | None:
         self._does_exist = self._cached_api_results.get(self.cleaned)
@@ -93,6 +97,7 @@ class DOI:
     @classmethod
     def _exists_at_api(cls, doi: str) -> bool | None:
         url = cls.API_URL.format(doi=doi)
+        print(http)
         resp = http.request("HEAD", url)
         existence = cls.API_RESPONSE_MAP.get(resp.status)
         logger.info(f"{doi} | {url} | {resp.status} = {existence}")
@@ -100,6 +105,7 @@ class DOI:
 
     @classmethod
     def clean(cls, s: str) -> str:
+        s = str(s)
         s = cls.DOI_FIXES.get(s, s)
         return s.strip(". /")
 

@@ -96,6 +96,7 @@ reportUnnecessaryTypeIgnoreComment = false # sometimes disagrees with vscode bui
 reportUnusedCallResult = true
 
 [tool.pytest.ini_options]
+addopts = "--disable-socket"
 filterwarnings = "ignore::DeprecationWarning"
 log_cli = "False"
 log_cli_level = "DEBUG"

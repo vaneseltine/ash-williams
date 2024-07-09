@@ -4,4 +4,8 @@ nox
 pylint
 pyright
 pytest
+pytest-cov
+pytest-instafail
+pytest-mock
 pytest-randomly
+pytest-socket

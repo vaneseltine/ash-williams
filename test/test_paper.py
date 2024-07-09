@@ -36,9 +36,9 @@ class TestReports:
             "Retracted:": True,
         }
 
-    def test_single_unretracted_doi_captured(self, full_db):
+    def test_single_unretracted_doi_captured(self, mock_db):
         paper = Paper(UNRETRACTED, mime_type="text/plain")
-        report = paper.report(full_db)
+        report = paper.report(mock_db)
         assert report["dois"]["10.21105/joss.03440"] == {
             "DOI is valid:": True,
             "Retracted:": False,

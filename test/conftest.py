@@ -32,6 +32,7 @@ def full_db():
     """
     The last-sorted should be, if file naming is consistent, the most recent.
     But don't use this fixture if it's critical that you use the most recent dataset.
+    Generally mock_db is the one to use.
     """
     latest_csv = sorted(DATA_DIR.glob("*.csv"))[-1]
     print(f"Passing full_db as {latest_csv}")
@@ -40,4 +41,13 @@ def full_db():
 
 @pytest.fixture(scope="session")
 def mock_db():
+    """
+    Four rows of bad mock data from the Crossref distribution of the Retraction Watch
+    database. Includes the following retracted DOIs:
+
+        - 10.1234/retracted12345
+        - 10.1234/retracted12346
+        - 10.1234/retracted12349
+        - 10.1234/retracted12345
+    """
     return RetractionDatabase(MOCK_DIR / "rw_database.csv")

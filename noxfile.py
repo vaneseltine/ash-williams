@@ -4,12 +4,15 @@ See: https://nox.thea.codes/en/stable/cookbook.html
 
 import os
 import re
-import sys
 from pathlib import Path
 from typing import Any
 
 import nox
 from nox.sessions import Session
+
+os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+IN_CI = os.getenv("CI", "").lower() == "true"
+
 
 nox.options.default_venv_backend = "venv"
 nox.options.reuse_existing_virtualenvs = "yes"
@@ -26,9 +29,6 @@ nox.options.sessions = [
 ]
 
 CODE_DIR = "ash"
-
-IN_CI = os.getenv("CI", "").lower() == "true"
-IN_WINDOWS = sys.platform.startswith("win")
 
 
 def run(session: Session, cmd: str, **kwargs: dict[str, Any]):
@@ -56,8 +56,6 @@ def supported_pythons(classifiers_file: str | Path = "pyproject.toml"):
 
     Note that comments are included in this search.
     """
-    # if IN_WINDOWS:
-    #     return None
     pattern = re.compile(r"Programming Language :: Python :: ([0-9]+\.[0-9.]+)")
     pythons = pattern.findall(Path(classifiers_file).read_text())
     return pythons
@@ -85,11 +83,13 @@ def lint_pyright(session: Session):
 @nox.session(python=False)
 def test_pytest(session: Session):
     """
-    pytest-xdist can be installed to allow threaded parallel testing. But it is most
-    likely that many tests will be required to compensate for the added overhead
-    spinning up workers.
+    Simple, non-environment run with coverage.
+
+    pytest-xdist can be installed to allow threaded parallel testing with "-n auto."
+    But it takes a couple seconds just to spin up the workers, so unless testing is
+    taking long enough to compensate, it's overkill.
     """
-    run(session, "python -m coverage run -m pytest")
+    run(session, "python -m coverage run -m pytest --durations=5")
     run(session, "python -m coverage report")
 
 
@@ -97,8 +97,7 @@ def test_pytest(session: Session):
 def test_pytest_multipython(session: Session):
     install(session, "-r requirements-dev.txt")
     install(session, "-e .")
-    run(session, "python -m coverage run -m pytest")
-    run(session, "python -m coverage report")
+    run(session, "python -m run -m pytest")
 
 
 @nox.session(python=False)
@@ -110,7 +109,7 @@ def test_coverage(session: Session):
 @nox.session(python=False)
 def lint_todos(_):
     for file in Path(".").glob("*/*.py"):
-        result = search_in_file(file, "((TODO|FIXME).*)")
+        result = search_in_file(file, "((TODO|FIXME|XXX).*)")
         for line in result:
             print(f"{file.name:>20}: {line}")
 

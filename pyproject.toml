@@ -99,9 +99,6 @@ reportUnusedCallResult = true
 filterwarnings = "ignore::DeprecationWarning"
 log_cli = "False"
 log_cli_level = "DEBUG"
-markers = [
-    "vault: requires the complete PDF vault (deselect with '-m \"not fish\"')",
-]
 python_files = ["test_*.py"]
 python_functions = ["t_*", "test_*", "issue*"]
 testpaths = ["test"]

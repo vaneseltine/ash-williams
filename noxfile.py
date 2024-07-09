@@ -6,6 +6,7 @@ import os
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 import nox
 from nox.sessions import Session
@@ -30,12 +31,12 @@ IN_CI = os.getenv("CI", "").lower() == "true"
 IN_WINDOWS = sys.platform.startswith("win")
 
 
-def run(session: Session, cmd: str, **kwargs):  # type: ignore
-    _ = session.run(*cmd.split(), **kwargs)  # type: ignore
+def run(session: Session, cmd: str, **kwargs: dict[str, Any]):
+    _ = session.run(*cmd.split(), **kwargs)  # pyright: ignore[reportArgumentType]
 
 
-def install(session: Session, cmd: str, **kwargs):  # type: ignore
-    _ = session.install(*cmd.split(), **kwargs)  # type: ignore
+def install(session: Session, cmd: str, **kwargs: dict[str, Any]):
+    _ = session.install(*cmd.split(), **kwargs)  # pyright: ignore[reportArgumentType]
 
 
 def supported_pythons(classifiers_file: str | Path = "pyproject.toml"):

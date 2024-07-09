@@ -1,27 +1,121 @@
 ﻿import csv
+import logging
 import mimetypes
+import re
 import zipfile
 from abc import abstractmethod
 from collections import defaultdict
 from collections.abc import Callable
+from itertools import chain
 from pathlib import Path
 from typing import Any, Protocol
 from xml.etree.ElementTree import XML
 
 import filetype  # type: ignore
+import urllib3
 from pypdf import PdfReader
 from striprtf.striprtf import rtf_to_text
 
-from . import doi
 from .config import log_this
+
+http = urllib3.PoolManager()
+
+
+logger = logging.getLogger(__name__)
+
+
+class BadDOIError(ValueError):
+    pass
+
+
+class DOI:
+    """
+    See https://www.crossref.org/blog/dois-and-matching-regular-expressions/
+
+    https://www.doi.org/the-identifier/resources/factsheets/doi-resolution-documentation
+
+    Response Codes
+
+      1 : Success. (HTTP 200 OK)
+      2 : Error. Something unexpected went wrong during handle resolution. (HTTP 500
+          Internal Server Error)
+    100 : Handle Not Found. (HTTP 404 Not Found)
+    200 : Values Not Found. The handle exists but has no values (or no values according
+          to the types and indices specified). (HTTP 200 OK)
+    """
+
+    CROSSREF_PATTERNS = [
+        r"10.\d{4,9}/[-._;()/:A-Z0-9]+",
+        r"10.1002/[^\s]+",
+        r"10.\d{4}/\d+-\d+X?(\d+)\d+<[\d\w]+:[\d\w]*>\d+.\d+.\w+;\dP",
+        r"10.1021/\w\w\d++",
+        r"10.1207/[\w\d]+\&\d+_\d+",
+    ]
+
+    REGEXES = [re.compile(s, flags=re.IGNORECASE) for s in CROSSREF_PATTERNS]
+    BAD_DOIS = ["", "unavailable", "Unavailable"]
+    DOI_FIXES = {
+        "10.1177/ 0020720920940575": "10.1177/0020720920940575",
+    }
+
+    API_URL = "https://doi.org/api/handles/{doi}"
+    API_RESPONSE_MAP: dict[int, bool] = {
+        200: True,
+        404: False,
+    }
+    _cached_api_results: dict[str, bool] = {}
+
+    def __init__(self, raw: str) -> None:
+        self.raw = raw
+        self.cleaned = self.clean(self.raw)
+        self._validate_via_regex(self.cleaned)
+        self._does_exist: bool | None = self._cached_api_results.get(self.cleaned)
+
+    @classmethod
+    def _validate_via_regex(cls, doi: str) -> None:
+        if not doi:
+            raise BadDOIError("No DOI!")
+        if doi in cls.BAD_DOIS:
+            raise BadDOIError(f"Bad DOI: `{doi}`")
+        if any(pattern.match(doi) for pattern in cls.REGEXES):
+            return
+        raise BadDOIError(f"Bad DOI: `{doi}`")
+
+    def exists(self) -> bool | None:
+        self._does_exist = self._cached_api_results.get(self.cleaned)
+        if self._does_exist is None:
+            self._does_exist = self._exists_at_api(self.cleaned)
+        # But only bother to cache if there's a real answer
+        if self._does_exist is not None:
+            self._cached_api_results[self.cleaned] = self._does_exist
+        return self._does_exist
+
+    @classmethod
+    def _exists_at_api(cls, doi: str) -> bool | None:
+        url = cls.API_URL.format(doi=doi)
+        resp = http.request("HEAD", url)
+        existence = cls.API_RESPONSE_MAP.get(resp.status)
+        logger.info(f"{doi} | {url} | {resp.status} = {existence}")
+        return existence
+
+    @classmethod
+    def clean(cls, s: str) -> str:
+        s = cls.DOI_FIXES.get(s, s)
+        return s.strip(". /")
+
+    def __str__(self) -> str:
+        return self.cleaned
+
+    def __repr__(self) -> str:
+        return f"""{self.__class__.__name__}("{self.cleaned}")"""
 
 
 class RetractionDatabase:
     """
-    Lazily load the DB.
-
-    TODO: Cache path -> data so people don't have to use this object directly.
+    Lazily load and cache the DB.
     """
+
+    _path_cache: dict[Path, defaultdict[str, list[dict[str, str]]]] = {}
 
     @log_this
     def __init__(self, path: Path | str) -> None:
@@ -30,9 +124,13 @@ class RetractionDatabase:
 
     @property
     def data(self) -> defaultdict[str, list[dict[str, str]]]:
+        cached_data = self._path_cache.get(self.path)
+        if cached_data is not None:
+            logger.info(f"Using cached data from {self.path}")
+            self._data = cached_data
         if len(self._data) == 0:
             self._build_data()
-            doi.validate_collection(self.dois)
+            self._path_cache[self.path] = self._data
         return self._data
 
     @property
@@ -41,19 +139,19 @@ class RetractionDatabase:
 
     def _build_data(self) -> None:
         """
-        Consider caching this, e.g., outfile.write_text(json.dumps(self._data))
+        Consider caching long term, e.g., outfile.write_text(json.dumps(self._data))
         """
-        print(f"Loading retraction database from {self.path.absolute()}...")
+        logger.info(f"Loading retraction database from {self.path.absolute()}...")
         with self.path.open(encoding="utf8", errors="backslashreplace") as csvfile:
             reader = csv.DictReader(csvfile)
-            print(reader.fieldnames)
             for row in reader:
                 raw_doi = row.get("OriginalPaperDOI", "")
-                clean_doi = doi.clean(raw_doi)
-                if clean_doi in doi.BAD_DOIS:
+                try:
+                    doi = DOI(raw_doi)
+                except BadDOIError:
                     continue
                 row_dict = {str(k): str(v) for k, v in row.items()}
-                self._data[clean_doi].append(row_dict)
+                self._data[str(doi)].append(row_dict)
 
 
 class MIMEHandler(Protocol):
@@ -82,7 +180,13 @@ class Paper:
     def report(self, db: RetractionDatabase | Path | str) -> dict[str, Any]:
         if isinstance(db, (Path, str)):
             db = RetractionDatabase(db)
-        all_dois = {doi: (doi in db.dois) for doi in self.dois}
+        all_dois = {
+            doi: {
+                "DOI is valid:": DOI(doi).exists(),
+                "Retracted:": (doi in db.dois),
+            }
+            for doi in self.dois
+        }
         zombies = sorted([doi for doi in self.dois if doi in db.dois])
         zombie_report = [
             {
@@ -119,7 +223,7 @@ class PDFHandler(MIMEHandler):
     def extract_dois(self, data: Any) -> list[str]:
         reader = PdfReader(stream=data)  # type: ignore -- it takes FileStorage fine
         complete_text = "\n".join(page.extract_text() for page in reader.pages)
-        return doi.text_to_dois(complete_text)
+        return text_to_dois(complete_text)
 
 
 @Paper.register_handler(
@@ -148,7 +252,7 @@ class DOCXHandler(MIMEHandler):
                 paragraphs.append("".join(texts))
         result = "\n\n".join(paragraphs)
         print("docx", result)
-        return doi.text_to_dois(result)
+        return text_to_dois(result)
 
 
 @Paper.register_handler("application/rtf")  # .rtf on Linux
@@ -158,7 +262,7 @@ class RTFHandler(MIMEHandler):
     def extract_dois(self, data: Any) -> list[str]:
         ingested_rtf = data.read().decode()
         text: str = rtf_to_text(ingested_rtf)  # type: ignore
-        return doi.text_to_dois(text)  # type: ignore
+        return text_to_dois(text)  # type: ignore
 
 
 @Paper.register_handler("text/plain")
@@ -169,11 +273,11 @@ class PlainTextHandler(MIMEHandler):
 
     def extract_dois(self, data: Any) -> list[str]:
         if isinstance(data, str):
-            return doi.text_to_dois(data)
+            return text_to_dois(data)
         first_read = data.read()
         if isinstance(first_read, str):
-            return doi.text_to_dois(first_read)
-        return doi.text_to_dois(first_read.decode("utf-8"))
+            return text_to_dois(first_read)
+        return text_to_dois(first_read.decode("utf-8"))
 
 
 @log_this
@@ -199,3 +303,9 @@ def binary_mime_check(obj: Any) -> str:
     if kind is None:
         raise TypeError(f"Could not determine MIME type of {obj}")
     return kind.mime
+
+
+def text_to_dois(text: str) -> list[str]:
+    matches = [pattern.findall(text) for pattern in DOI.REGEXES]
+    dois = list(chain.from_iterable(matches))
+    return [str(DOI(d)) for d in dois]

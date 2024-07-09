@@ -29,7 +29,13 @@ def vault():
 
 @pytest.fixture(scope="session")
 def full_db():
-    return RetractionDatabase(DATA_DIR / "retraction-watch-2024-07-04.csv")
+    """
+    The last-sorted should be, if file naming is consistent, the most recent.
+    But don't use this fixture if it's critical that you use the most recent dataset.
+    """
+    latest_csv = sorted(DATA_DIR.glob("*.csv"))[-1]
+    print(f"Passing full_db as {latest_csv}")
+    return latest_csv
 
 
 @pytest.fixture(scope="session")

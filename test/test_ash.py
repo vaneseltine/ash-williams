@@ -2,7 +2,7 @@ from io import StringIO
 
 import pytest
 
-from ash.ash import DOI, BadDOIError, Paper, path_to_mime_type
+from ash.ash import DOI, InvalidDOI, Paper, path_to_mime_type
 
 UNRETRACTED_TEXT = "A DOI here 10.21105/joss.03440 and that's all for now."
 UNRETRACTED_DOI = "10.21105/joss.03440"
@@ -172,7 +172,7 @@ class TestDOI:
 
     @pytest.mark.parametrize("raw", ["", None, "unavailable", "Unavailable", "1235.23"])
     def test_dois_obviously_bad(self, raw):
-        with pytest.raises(BadDOIError):
+        with pytest.raises(InvalidDOI):
             _ = DOI(raw)
 
     @pytest.mark.parametrize(
@@ -182,22 +182,17 @@ class TestDOI:
         _ = DOI(raw)
 
     def test_existence(self, mocker):
-        # Mock the 'request' method on the already instantiated 'http' instance in 'ash.ash'
         mock_http_request = mocker.patch("ash.ash.http.request")
 
-        # Configure the mock to return a mock response object when called
         mock_response = mocker.MagicMock()
-        mock_response.status = 200  # Presume a status code of 200 for the example
+        mock_response.status = 200
         mock_http_request.return_value = mock_response
 
-        # Call the method that you expect to make the HTTP request
         good_doi = "10.1126/science.aax5705"
         doi = DOI(good_doi)
         exists_result = doi.exists()
 
-        # Check if the endpoint meets your expectation
         expected_url = "https://doi.org/api/handles/" + good_doi
         mock_http_request.assert_called_once_with("HEAD", expected_url)
 
-        # Any other assertions regarding the return value of doi.exists() can follow...
-        assert exists_result  # Replace with the actual expected result
+        assert exists_result

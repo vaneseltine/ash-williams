@@ -24,7 +24,7 @@ http = urllib3.PoolManager()
 logger = logging.getLogger(__name__)
 
 
-class BadDOIError(ValueError):
+class InvalidDOI(ValueError):
     pass
 
 
@@ -82,8 +82,8 @@ class DOI:
     @staticmethod
     def _report_bad_doi(doi: Any) -> None:
         if not doi:
-            raise BadDOIError("No DOI!")
-        raise BadDOIError(f'Bad DOI: "{doi}"')
+            raise InvalidDOI("No DOI!")
+        raise InvalidDOI(f'Bad DOI: "{doi}"')
 
     def exists(self) -> bool | None:
         self._does_exist = self._cached_api_results.get(self.cleaned)
@@ -154,7 +154,7 @@ class RetractionDatabase:
                 raw_doi = row.get("OriginalPaperDOI", "")
                 try:
                     doi = DOI(raw_doi)
-                except BadDOIError:
+                except InvalidDOI:
                     continue
                 row_dict = {str(k): str(v) for k, v in row.items()}
                 self._data[str(doi)].append(row_dict)

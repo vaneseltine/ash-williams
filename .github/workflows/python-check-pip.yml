@@ -27,6 +27,7 @@ jobs:
     - name: Install latest from PyPI
       run: |
         python -m pip install ash-williams
+        python -m pip freeze
     - name: Literally just invoke it # Consider a more elaborate test
       run: |
         python -c "from ash import Paper, RetractionDatabase;print(ash.Paper)"

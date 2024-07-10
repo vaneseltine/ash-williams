@@ -214,8 +214,8 @@ class Paper:
             db = RetractionDatabase(db)
         all_dois = {
             doi: {
-                "DOI is valid:": DOI(doi).exists(),
-                "Retracted:": (doi in db.dois),
+                "DOI is valid": DOI(doi).exists(),
+                "Retracted": (doi in db.dois),
             }
             for doi in self.dois
         }

@@ -10,6 +10,19 @@ MOCKED_RETRACTION = "This is retracted 10.1234/retracted12349 in mock db."
 MOCKED_RETRACTION_DOI = "10.1234/retracted12349"
 
 
+class TestEndtoEnd:
+    """
+    Maybe one day I'll sort out a doctest but there's a lot of mocking currently...
+    """
+
+    @pytest.mark.parametrize("mock_http", [200], indirect=True)
+    def test_readme_style_invocation_works(self, fake_db, mock_http, tmpdir):
+        path = tmpdir / "text.txt"
+        path.write_text(MOCKED_RETRACTION, encoding="utf-8")
+        paper = Paper.from_path(path)
+        assert len(paper.report(fake_db)) > 0
+
+
 class TestPaperCreation:
 
     def test_not_imp_error_for_bad_mimes(self):
@@ -109,8 +122,8 @@ class TestPaperReports:
         paper = Paper(UNRETRACTED_TEXT, mime_type="text/plain")
         report = paper.report(fake_db)
         assert report["dois"][UNRETRACTED_DOI] == {
-            "DOI is valid:": True,
-            "Retracted:": False,
+            "DOI is valid": True,
+            "Retracted": False,
         }
 
     @pytest.mark.parametrize("mock_http", [404], indirect=True)
@@ -120,8 +133,20 @@ class TestPaperReports:
         paper = Paper(MOCKED_RETRACTION, mime_type="text/plain")
         report = paper.report(fake_db)
         assert report["dois"][MOCKED_RETRACTION_DOI] == {
-            "DOI is valid:": False,
-            "Retracted:": True,
+            "DOI is valid": False,
+            "Retracted": True,
+        }
+
+    @pytest.mark.parametrize("mock_http", [418], indirect=True)
+    def test_unclear_response_from_server(self, fake_db, mock_http, tmpdir):
+
+        path = tmpdir / "text.txt"
+        path.write_text(MOCKED_RETRACTION, encoding="utf-8")
+        paper = Paper.from_path(path)
+        report = paper.report(fake_db)
+        assert report["dois"][MOCKED_RETRACTION_DOI] == {
+            "DOI is valid": None,
+            "Retracted": True,
         }
 
 

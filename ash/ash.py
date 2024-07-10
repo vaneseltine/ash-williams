@@ -4,7 +4,7 @@ import mimetypes
 import re
 import zipfile
 from abc import abstractmethod
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Callable
 from itertools import chain
 from pathlib import Path
@@ -24,7 +24,7 @@ http = urllib3.PoolManager()
 logger = logging.getLogger(__name__)
 
 
-class InvalidDOI(ValueError):
+class InvalidDOIError(ValueError):
     pass
 
 
@@ -48,7 +48,7 @@ class DOI:
         r"10.\d{4,9}/[-._;()/:A-Z0-9]+",
         r"10.1002/[^\s]+",
         r"10.\d{4}/\d+-\d+X?(\d+)\d+<[\d\w]+:[\d\w]*>\d+.\d+.\w+;\dP",
-        r"10.1021/\w\w\d++",
+        r"10.1021/\w\w\d+",
         r"10.1207/[\w\d]+\&\d+_\d+",
     ]
 
@@ -82,8 +82,8 @@ class DOI:
     @staticmethod
     def _report_bad_doi(doi: Any) -> None:
         if not doi:
-            raise InvalidDOI("No DOI!")
-        raise InvalidDOI(f'Bad DOI: "{doi}"')
+            raise InvalidDOIError("No DOI!")
+        raise InvalidDOIError(f'Bad DOI: "{doi}"')
 
     def exists(self) -> bool | None:
         self._does_exist = self._cached_api_results.get(self.cleaned)
@@ -126,6 +126,7 @@ class RetractionDatabase:
     def __init__(self, path: Path | str) -> None:
         self.path = Path(path)
         self._data: defaultdict[str, list[dict[str, str]]] = defaultdict(list)
+        self._invalid_dois: list[str] = []
 
     @property
     def data(self) -> defaultdict[str, list[dict[str, str]]]:
@@ -144,8 +145,11 @@ class RetractionDatabase:
 
     def _build_data(self) -> None:
         """
+        Build dict of doi -> database columns.
+
         Consider caching long term, e.g., outfile.write_text(json.dumps(self._data))
         """
+
         logger.info(f"Loading retraction database from {self.path.absolute()}...")
         with self.path.open(encoding="utf8", errors="backslashreplace") as csvfile:
             reader = csv.DictReader(csvfile)
@@ -153,10 +157,32 @@ class RetractionDatabase:
                 raw_doi = row.get("OriginalPaperDOI", "")
                 try:
                     doi = DOI(raw_doi)
-                except InvalidDOI:
+                except InvalidDOIError:
+                    self._invalid_dois.append(raw_doi)
                     continue
                 row_dict = {str(k): str(v) for k, v in row.items()}
                 self._data[str(doi)].append(row_dict)
+        self._log_data_details()
+
+    def _log_data_details(self) -> None:
+        n_valid_entries = sum(len(subdict) for subdict in self._data.values())
+        logger.info(
+            f"... Loaded {len(self._data):,} valid DOIs"
+            + f" with {n_valid_entries:,} total records."
+        )
+        counted_errors = Counter(self._invalid_dois)
+        logger.info(f"... Ignored {len(self._invalid_dois):,} invalid DOIs.")
+        common = ", ".join(f"{s!r} ({i:,})" for s, i in counted_errors.most_common())
+        logger.info(f"... Most common invalid DOIs: {common}")
+
+    def __str__(self) -> str:
+        return str(self.path.name)
+
+    def __repr__(self):
+        try:
+            return f"{self.__class__.__name__}('{self.path}')"
+        except AttributeError:
+            return f"{self.__class__.__name__}(...)"
 
 
 class MIMEHandler(Protocol):
@@ -206,7 +232,6 @@ class Paper:
         return {"dois": all_dois, "zombies": zombie_report}
 
     @classmethod
-    @log_this
     def register_handler(
         cls, mime_type: str
     ) -> Callable[[type[MIMEHandler]], type[MIMEHandler]]:

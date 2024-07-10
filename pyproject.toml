@@ -4,8 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ash"
-version = "0.9.0"
 authors = [{ name = "Matt VanEseltine", email = "matvan@umich.edu" }]
+description = "Hunting Deadites in the references"
+version = "0.9.0"
+requires-python = ">=3.10" # PEP 604 allowed writing union types as X | Y in 3.10+
 dynamic = ["dependencies", "readme"]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
@@ -16,15 +18,14 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Typing :: Typed",
 ]
-license = { file = "LICENSE" }
-description = "Hunting Deadites in the references"
 keywords = [
     "bibliography",
     "citation",
@@ -34,7 +35,7 @@ keywords = [
     "retraction",
     "science",
 ]
-requires-python = ">=3.12"
+license = { file = "LICENSE" }
 
 [project.urls]
 Homepage = "https://github.com/vaneseltine/ash"

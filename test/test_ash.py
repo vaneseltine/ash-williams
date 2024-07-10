@@ -2,7 +2,7 @@ from io import StringIO
 
 import pytest
 
-from ash.ash import DOI, InvalidDOI, Paper, path_to_mime_type
+from ash.ash import DOI, InvalidDOIError, Paper, path_to_mime_type
 
 UNRETRACTED_TEXT = "A DOI here 10.21105/joss.03440 and that's all for now."
 UNRETRACTED_DOI = "10.21105/joss.03440"
@@ -162,7 +162,7 @@ class TestDOI:
 
     @pytest.mark.parametrize("raw", ["", None, "unavailable", "Unavailable", "1235.23"])
     def test_dois_obviously_bad(self, raw):
-        with pytest.raises(InvalidDOI):
+        with pytest.raises(InvalidDOIError):
             _ = DOI(raw)
 
     @pytest.mark.parametrize(

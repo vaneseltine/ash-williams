@@ -14,7 +14,7 @@ class TestPaperCreation:
 
     def test_not_imp_error_for_bad_mimes(self):
         with pytest.raises(NotImplementedError):
-            _ = Paper("asdf", mime_type="bananas")
+            _ = Paper("asdf", mime_type="ba/nanas")
 
 
 class TestPaperDOIExtraction:

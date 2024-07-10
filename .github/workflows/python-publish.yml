@@ -10,8 +10,7 @@
 name: Upload Python Package (Manual)
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch
 
 permissions:
   contents: read

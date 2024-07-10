@@ -3,7 +3,7 @@ requires = ["setuptools >= 70.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ash"
+name = "ash-williams"
 authors = [{ name = "Matt VanEseltine", email = "matvan@umich.edu" }]
 description = "Hunting Deadites in the references"
 dynamic = ["dependencies", "readme"]
@@ -38,9 +38,9 @@ keywords = [
 license = { file = "LICENSE" }
 
 [project.urls]
-Homepage = "https://github.com/vaneseltine/ash"
-Repository = "https://github.com/vaneseltine/ash"
-Issues = "https://github.com/vaneseltine/ash/issues"
+Homepage = "https://github.com/vaneseltine/ash-williams"
+Repository = "https://github.com/vaneseltine/ash-williams"
+Issues = "https://github.com/vaneseltine/ash-williams/issues"
 
 [tool.coverage.run]
 omit = ["*/__*.py"]

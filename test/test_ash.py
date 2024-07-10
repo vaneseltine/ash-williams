@@ -10,6 +10,13 @@ MOCKED_RETRACTION = "This is retracted 10.1234/retracted12349 in mock db."
 MOCKED_RETRACTION_DOI = "10.1234/retracted12349"
 
 
+class TestPaperCreation:
+
+    def test_not_imp_error_for_bad_mimes(self):
+        with pytest.raises(NotImplementedError):
+            _ = Paper("asdf", mime_type="bananas")
+
+
 class TestPaperDOIExtraction:
 
     def test_create_via_string_with_mime(self):

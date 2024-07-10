@@ -244,10 +244,17 @@ class Paper:
 
     @classmethod
     def _get_handler(cls, mime_type: str) -> MIMEHandler:
-        return cls._MIME_handlers[mime_type]()
+        handler = cls._MIME_handlers.get(mime_type)
+        if handler is None:
+            implemented = ", ".join(cls._MIME_handlers.keys())
+            msg = f"No handler for {mime_type!r}. Available: {implemented}."
+            raise NotImplementedError(msg)
+
+        return handler()
 
 
 @Paper.register_handler("application/pdf")
+@Paper.register_handler("application/acrobat")
 class PDFHandler(MIMEHandler):
 
     def extract_dois(self, data: Any) -> list[str]:
@@ -295,9 +302,10 @@ class RTFHandler(MIMEHandler):
 
 
 @Paper.register_handler("text/plain")
-@Paper.register_handler("application/x-latex")
 @Paper.register_handler("text/x-tex")  # .tex on Linux
 @Paper.register_handler("application/x-tex")  # .tex on Windows
+@Paper.register_handler("text/x-latex")
+@Paper.register_handler("application/x-latex")
 class PlainTextHandler(MIMEHandler):
 
     def extract_dois(self, data: Any) -> list[str]:

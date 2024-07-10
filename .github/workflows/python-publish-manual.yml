@@ -7,14 +7,11 @@
 # To get a newer version, you will need to update the SHA.
 # You can also reference a tag or branch, but the action may change without warning.
 
-name: Upload to PyPI (Release)
+name: Upload to PyPI (Manual)
 
-# Trigger this workflow by creating a release
-# https://github.com/vaneseltine/ash-williams/releases/new
-on:
-  release:
-    types:
-      - published
+# Trigger this workflow by manually running this action
+# https://github.com/vaneseltine/ash-williams/actions
+on: workflow_dispatch
 
 permissions:
   contents: read

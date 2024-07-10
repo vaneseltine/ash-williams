@@ -112,7 +112,6 @@ def lint_todos(_):
 
 @nox.session
 def check_build(session: Session):
-    print(session.python)
     install(session, "-r requirements.txt")
     install(session, "build twine")
     run(session, "python -m build")

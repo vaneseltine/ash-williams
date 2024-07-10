@@ -201,7 +201,8 @@ class Paper:
         self.dois = handler.extract_dois(data)
 
     @classmethod
-    def from_path(cls, path: Path, mime_type: str | None = None) -> "Paper":
+    def from_path(cls, path: Path | str, mime_type: str | None = None) -> "Paper":
+        path = Path(path)
         if not path.exists():
             raise FileNotFoundError(path)
         mime_type = mime_type or path_to_mime_type(path)

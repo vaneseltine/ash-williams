@@ -23,7 +23,7 @@ from pprint import pprint
 import ash
 
 db = ash.RetractionDatabase("./retractions.csv")
-paper = Paper("./manuscript.docx")
+paper = ash.Paper.from_path("./manuscript.docx")
 pprint(paper.report(db))
 ```
 

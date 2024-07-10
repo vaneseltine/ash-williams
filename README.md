@@ -166,3 +166,7 @@ COPE Case number 15-17, "Citing a retracted paper," https://publicationethics.or
 > They are presumably asking whether a paper citing a retracted paper is to be considered sound? We think this should be a question for the peer reviewers. Perhaps, as a responsible editor, they should point out to the reviewers that one of the references has been retracted. The reviewers could then decide whether this was a key reference supporting the crux of the current paper or whether it was merely something that could be deleted or replaced with something more suitable.
 
 > On the somewhat more philosophical question of whether a retracted paper should ever be cited, there may be legitimate cases where one would want to cite a retracted article. It comes down to why you cite something; as a way of noting something that happened previously, would be fine. If writing a paper about retractions, for example, one might quite reasonably want to cite some key retracted papers to illustrate the issues involved. However, it is very important to mark the paper as retracted in the reference section so this is clearly marked for readers (eg, Author AB, et al. RETRACTED: Title of article. Journal name. 2015, 100: 1-7.)
+
+### Analogous use of RW database at Wikipedia
+
+https://en.wikipedia.org/wiki/Wikipedia:Wikipedia_Signpost/2024-06-08/Special_report

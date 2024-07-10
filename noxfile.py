@@ -10,12 +10,13 @@ from typing import Any
 import nox
 from nox.sessions import Session
 
+CODE_DIR = "ash"
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 IN_CI = os.getenv("CI", "").lower() == "true"
 
 
 nox.options.default_venv_backend = "venv"
-nox.options.reuse_existing_virtualenvs = "yes"
+# nox.options.reuse_existing_virtualenvs = "no"
 nox.options.error_on_external_run = "yes"
 
 # Default run
@@ -26,8 +27,6 @@ nox.options.sessions = [
     "test_pytest_single",
     "lint_todos",
 ]
-
-CODE_DIR = "ash"
 
 
 def run(session: Session, cmd: str, **kwargs: dict[str, Any]):
@@ -46,7 +45,7 @@ def supported_pythons(classifiers_file: str | Path = "pyproject.toml"):
 
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13",
+        # "Programming Language :: Python :: 3.13", # I did comment this and yet
         "Programming Language :: Python :: 3 :: Only",
 
     Becomes:
@@ -56,8 +55,8 @@ def supported_pythons(classifiers_file: str | Path = "pyproject.toml"):
     Note that comments are included in this search.
     """
     pattern = re.compile(r"Programming Language :: Python :: ([0-9]+\.[0-9.]+)")
-    pythons = pattern.findall(Path(classifiers_file).read_text())
-    return pythons
+    pythons = pattern.findall(Path(classifiers_file).read_text(encoding="utf-8"))
+    return sorted(pythons)
 
 
 @nox.session(python=False)
@@ -109,6 +108,15 @@ def lint_todos(_):
         result = search_in_file(file, "((TODO|FIXME|XXX).*)")
         for line in result:
             print(f"{file.name:>20}: {line}")
+
+
+@nox.session
+def check_build(session: Session):
+    print(session.python)
+    install(session, "-r requirements.txt")
+    install(session, "build twine")
+    run(session, "python -m build")
+    run(session, "python -m twine check dist/*")
 
 
 def search_in_file(path: Path, pattern: str, encoding: str = "utf-8"):

@@ -127,10 +127,6 @@ Do we want to give...
 - [ ] Server in separate repository (in progress)
 - [ ] Binder/colab notebook for easy Python sampling
 
-## Retraction Watch via Crossref
-
-Per the official Crossref announcement -- https://doi.org/10.13003/c23rw1d9 -- to download the latest data snapshot (~44 MB as of Jul 2024), add your email address to the following: api.labs.crossref.org/data/retractionwatch?youremailhere@example.com
-
 ### API
 
 We could alternatively hit the Crossref API with DOIs in hand

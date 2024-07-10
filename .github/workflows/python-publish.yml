@@ -7,7 +7,7 @@
 # To get a newer version, you will need to update the SHA.
 # You can also reference a tag or branch, but the action may change without warning.
 
-name: Upload Python Package (Manual)
+name: Upload to PyPI
 
 # Trigger this workflow by creating a manual release
 # https://github.com/vaneseltine/ash-williams/releases/new

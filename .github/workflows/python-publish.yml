@@ -9,8 +9,13 @@
 
 name: Upload Python Package (Manual)
 
+# Trigger this workflow by creating a manual release
+# https://github.com/vaneseltine/ash-williams/releases/new
 on:
-  workflow_dispatch
+  release: 
+    types:
+      - published
+      - created
 
 permissions:
   contents: read

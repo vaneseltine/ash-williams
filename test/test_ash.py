@@ -149,6 +149,15 @@ class TestPaperReports:
             "Retracted": True,
         }
 
+    def test_no_socket_hits_with_no_validation(self, fake_db):
+        text = """
+        You can find this in the sporting goods department. That's right, this sweet
+        baby was made in Grand Rapids, Michigan. Retails for about
+        doi:10.10995/walnutstock. That's right. "Short Smart: Shop S-Mart!"
+        """
+        paper = Paper(text, mime_type="text/plain")
+        print(paper.report(fake_db, validate_dois=False))
+
 
 class TestMIMEBehavior:
     @pytest.mark.parametrize(

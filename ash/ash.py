@@ -209,16 +209,32 @@ class Paper:
         with path.open("rb") as stream:
             return cls(stream, mime_type)
 
-    def report(self, db: RetractionDatabase | Path | str) -> dict[str, Any]:
+    def report(
+        self,
+        db: RetractionDatabase | Path | str,
+        validate_dois: bool = True,
+    ) -> dict[str, Any]:
         if isinstance(db, (Path, str)):
             db = RetractionDatabase(db)
-        all_dois = {
+        dois_report = self._generate_dois_report(db, validate=validate_dois)
+        zombie_report = self._generate_zombie_report(db)
+        return {"dois": dois_report, "zombies": zombie_report}
+
+    def _generate_dois_report(
+        self, db: RetractionDatabase, validate: bool
+    ) -> dict[str, Any]:
+        if not validate:
+            return {doi: {"Retracted": (doi in db.dois)} for doi in self.dois}
+
+        return {
             doi: {
                 "DOI is valid": DOI(doi).exists(),
                 "Retracted": (doi in db.dois),
             }
             for doi in self.dois
         }
+
+    def _generate_zombie_report(self, db: RetractionDatabase) -> list[dict[str, Any]]:
         zombies = sorted([doi for doi in self.dois if doi in db.dois])
         zombie_report = [
             {
@@ -230,7 +246,7 @@ class Paper:
             for doi in zombies
             for record in db.data[doi]
         ]
-        return {"dois": all_dois, "zombies": zombie_report}
+        return zombie_report
 
     @classmethod
     def register_handler(

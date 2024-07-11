@@ -31,4 +31,4 @@ jobs:
         ls
     - name: Barebones demo script
       run: |
-        python ./test/demo.py
+        python ./examples/mock_demo.py

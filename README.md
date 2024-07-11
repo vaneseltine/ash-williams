@@ -27,6 +27,13 @@ paper = ash.Paper.from_path("./manuscript.docx")
 pprint(paper.report(db))
 ```
 
+## Notebook example
+
+For a full-fledged demonstration, the example notebook downloads the Retraction Watch
+database. Set **Ash** loose on your own pasted text or uploaded file.
+
+[![Launch examples/ash_demo.ipynb on Google Colab](https://img.shields.io/badge/launch_notebook-ash_demonstration-888.svg?style=for-the-badge&logo=jupyter&logoColor=fff&color=ff4785)](https://colab.research.google.com/github/vaneseltine/ash-williams/blob/main/examples/ash_demo.ipynb)
+
 ## Retraction Watch database
 
 Crossref has licensed the Retraction Watch for a five-year term and are making it public

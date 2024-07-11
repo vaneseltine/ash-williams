@@ -117,7 +117,7 @@ class DOI:
 
 class RetractionDatabase:
     """
-    Lazily load and cache the DB.
+    Load and cache the database of retractions from provided CSV.
     """
 
     _path_cache: dict[Path, defaultdict[str, list[dict[str, str]]]] = {}
@@ -125,32 +125,31 @@ class RetractionDatabase:
     @log_this
     def __init__(self, path: Path | str) -> None:
         self.path = Path(path)
-        self._data: defaultdict[str, list[dict[str, str]]] = defaultdict(list)
         self._invalid_dois: list[str] = []
+        self.data = self._get_data()
 
-    @property
-    def data(self) -> defaultdict[str, list[dict[str, str]]]:
+    def _get_data(self) -> defaultdict[str, list[dict[str, str]]]:
         cached_data = self._path_cache.get(self.path)
         if cached_data is not None:
             logger.info(f"Using cached data from {self.path}")
-            self._data = cached_data
-        if len(self._data) == 0:
-            self._build_data()
-            self._path_cache[self.path] = self._data
-        return self._data
+            return cached_data
+        data = self._build_data()
+        self._path_cache[self.path] = data
+        return data
 
     @property
     def dois(self) -> set[str]:
         return set(self.data.keys())
 
-    def _build_data(self) -> None:
+    def _build_data(self) -> defaultdict[str, list[dict[str, str]]]:
         """
         Build dict of doi -> database columns.
 
         Consider caching long term, e.g., outfile.write_text(json.dumps(self._data))
         """
-
         logger.info(f"Loading retraction database from {self.path.absolute()}...")
+
+        data: defaultdict[str, list[dict[str, str]]] = defaultdict(list)
         with self.path.open(encoding="utf8", errors="backslashreplace") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -161,13 +160,14 @@ class RetractionDatabase:
                     self._invalid_dois.append(raw_doi)
                     continue
                 row_dict = {str(k): str(v) for k, v in row.items()}
-                self._data[str(doi)].append(row_dict)
-        self._log_data_details()
+                data[str(doi)].append(row_dict)
+        self._log_data_details(data)
+        return data
 
-    def _log_data_details(self) -> None:
-        n_valid_entries = sum(len(subdict) for subdict in self._data.values())
+    def _log_data_details(self, data: defaultdict[str, list[dict[str, str]]]) -> None:
+        n_valid_entries = sum(len(subdict) for subdict in data.values())
         logger.info(
-            f"... Loaded {len(self._data):,} valid DOIs"
+            f"... Loaded {len(data):,} valid DOIs"
             + f" with {n_valid_entries:,} total records."
         )
         counted_errors = Counter(self._invalid_dois)

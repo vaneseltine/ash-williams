@@ -1,8 +1,14 @@
-# Ash
+<p align="center">
+  <img src="https://raw.githubusercontent.com/vaneseltine/ash/master/ash-logo.svg" alt="The Ash logo: a blue shirt sleeve leading into a red chainsaw" width=200 />
+</p>
 
-Hunting the
-[evil dead](https://www.science.org/content/article/zombie-papers-wont-die-retracted-papers-notorious-fraudster-still-cited-years-later)
-in the scientific literature.
+<h2 align="center">Ash: finding the Evil Dead in the scientific literature</h2>
+
+> There is an urgent need for reviewers and editorial boards to check the reference list of submitted manuscripts, to prevent the spreading of zombie literature. [(Bucci 2019)](https://doi.org/10.1038/s41419-019-1450-3)
+
+> ‘Zombie papers’ just won’t die. [(Brainard 2022)](https://doi.org/10.1126/science.add6848)
+
+> I'm afraid I'm gonna have to ask you to leave the store. [(Williams 1992)](https://www.imdb.com/title/tt0106308/)
 
 ## Usage
 

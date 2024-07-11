@@ -12,7 +12,10 @@
 
 ## Usage
 
-This is a work in progress. Get yourself a copy of the Retraction Watch database,
+> [!WARNING]  
+> This is a work in progress. The API is subject to change.
+
+Get yourself a copy of the [Retraction Watch database](#retraction-watch-database),
 get yourself a paper with some references in it,
 then try **Ash**.
 First install:
@@ -33,12 +36,18 @@ paper = ash.Paper.from_path("./manuscript.docx")
 pprint(paper.report(db))
 ```
 
-## Notebook example
+## Notebook
 
-For a full-fledged demonstration, the example notebook downloads the Retraction Watch
-database. Set **Ash** loose on your own pasted text or uploaded file.
+For a full-fledged demonstration without any need to install on your own machine,
+examine this example notebook through Google Colab.
 
-[![Launch examples/ash_demo.ipynb on Google Colab](https://img.shields.io/badge/launch_notebook-ash_demonstration-888.svg?style=for-the-badge&logo=jupyter&logoColor=fff&color=ff4785)](https://colab.research.google.com/github/vaneseltine/ash-williams/blob/main/examples/ash_demo.ipynb)
+- Installs **Ash** in cloud-hosted notebook.
+- Provided your email, downloads the Retraction Watch database.
+- Runs and reports on a block of text -- or your uploaded file.
+
+[![Launch examples/ash_demo.ipynb on Google Colab](https://img.shields.io/badge/jupyter_notebook-launch_on_mybinder.org-888.svg?style=for-the-badge&logo=jupyter&logoColor=fff&color=df8429)](https://mybinder.org/v2/gh/vaneseltine/ash-williams/HEAD?labpath=examples%2Fash_demo.ipynb)
+
+[![Launch examples/ash_demo.ipynb on Google Colab](https://img.shields.io/badge/jupyter_notebook-launch_on_google_colab-888.svg?style=for-the-badge&logo=jupyter&logoColor=fff&color=f9ab00)](https://colab.research.google.com/github/vaneseltine/ash-williams/blob/main/examples/ash_demo.ipynb)
 
 ## Retraction Watch database
 

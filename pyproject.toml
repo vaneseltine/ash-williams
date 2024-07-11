@@ -7,7 +7,7 @@ name = "ash-williams"
 authors = [{ name = "Matt VanEseltine", email = "matvan@umich.edu" }]
 description = "Hunting Deadites in the references"
 dynamic = ["dependencies", "readme"]
-version = "0.9.1"
+version = "0.9.2"
 requires-python = ">=3.10" # PEP 604 allowed writing union types as X | Y in 3.10+
 classifiers = [
     "Development Status :: 3 - Alpha",

@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 from io import StringIO
 
 import pytest
@@ -118,7 +119,7 @@ class TestPaperDOIExtraction:
 class TestPaperReports:
 
     @pytest.mark.parametrize("mock_http", [200], indirect=True)
-    def test_single_unret(self, fake_db, mock_http):  # pylint: disable=unused-argument
+    def test_single_unret(self, fake_db, mock_http):
         paper = Paper(UNRETRACTED_TEXT, mime_type="text/plain")
         report = paper.report(fake_db)
         assert report["dois"][UNRETRACTED_DOI] == {
@@ -127,9 +128,7 @@ class TestPaperReports:
         }
 
     @pytest.mark.parametrize("mock_http", [404], indirect=True)
-    def test_report_structure_retracted(
-        self, fake_db, mock_http
-    ):  # pylint: disable=unused-argument
+    def test_report_structure_retracted(self, fake_db, mock_http):
         paper = Paper(MOCKED_RETRACTION, mime_type="text/plain")
         report = paper.report(fake_db)
         assert report["dois"][MOCKED_RETRACTION_DOI] == {

@@ -1,6 +1,10 @@
 import logging
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any, ParamSpec, TypeVar
+
+import platformdirs
+import tomlkit
 
 logging.basicConfig(
     level=logging.INFO,
@@ -12,6 +16,28 @@ logging.basicConfig(
 
 P = ParamSpec("P")
 R = TypeVar("R")
+V = TypeVar("V")
+
+CONFIG_FILE = Path(platformdirs.user_config_dir("ash-williams")) / "config.toml"
+
+if not CONFIG_FILE.exists():
+    CONFIG_FILE.parent.mkdir(parents=True)
+    _ = CONFIG_FILE.write_text("""[database]""")
+
+
+def read_value(*, table: str, key: str) -> str | None:
+    if not CONFIG_FILE.exists():
+        return None
+    return tomlkit.parse(CONFIG_FILE.read_text())[table].get(key)  # type: ignore
+
+
+def write_value(*, table: str, key: str, value: V) -> V | None:
+    if not CONFIG_FILE.exists():
+        return None
+    current = tomlkit.parse(CONFIG_FILE.read_text())
+    current[table][key] = value  # type: ignore
+    _ = CONFIG_FILE.write_text(tomlkit.dumps(current))  # type: ignore
+    return value
 
 
 def log_this(func: Callable[P, R]) -> Callable[P, R]:

@@ -37,6 +37,9 @@ keywords = [
 ]
 license = { file = "LICENSE" }
 
+[project.scripts]
+ash = "ash:ash_cli"
+
 [project.urls]
 Homepage = "https://github.com/vaneseltine/ash-williams"
 Repository = "https://github.com/vaneseltine/ash-williams"

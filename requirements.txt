@@ -1,4 +1,6 @@
+click>=8.0.0
 filetype>=1.2.0
+platformdirs>=2.2.0
 pypdf>=4.2.0
 striprtf>=0.0.26
 urllib3>=2.2.2

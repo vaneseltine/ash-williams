@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-import ash
+from ash.main import DOI, RetractionDatabase
 
 MAIN_DIR = Path(__file__).parent.parent
 DATA_DIR = MAIN_DIR / "data"
@@ -50,14 +50,14 @@ def fake_db():
         - 10.1234/retracted12349
         - 10.1234/retracted12345
     """
-    return ash.ash.RetractionDatabase(MOCK_DIR / "rw_database.csv")
+    return RetractionDatabase(MOCK_DIR / "rw_database.csv")
 
 
 @pytest.fixture(scope="function")
 def mock_http(mocker, request):
     code = request.param
 
-    http_request = mocker.patch("ash.ash.http.request")
+    http_request = mocker.patch("ash.main.http.request")
 
     mock_response = mocker.Mock()
     mock_response.status = code
@@ -67,4 +67,4 @@ def mock_http(mocker, request):
 
 @pytest.fixture(scope="function", autouse=True)
 def delete_api_cache():
-    ash.ash.DOI._cached_api_results = {}  # pylint: disable=protected-access
+    DOI._cached_api_results = {}  # pylint: disable=protected-access

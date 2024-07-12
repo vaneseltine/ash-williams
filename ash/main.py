@@ -16,7 +16,7 @@ import urllib3
 from pypdf import PdfReader
 from striprtf.striprtf import rtf_to_text
 
-from .config import log_this
+from ash.config import log_this
 
 http = urllib3.PoolManager()
 
@@ -124,7 +124,7 @@ class RetractionDatabase:
 
     @log_this
     def __init__(self, path: Path | str) -> None:
-        self.path = Path(path)
+        self.path = Path(path).resolve()
         self._invalid_dois: list[str] = []
         self.data = self._get_data()
 

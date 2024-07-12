@@ -18,11 +18,14 @@ stored_database = config.read_value(table="database", key="path")
     show_default=True,
     type=click.Path(),
 )
-@click.option(
-    "--clear", help="Clear saved retractions database file path.", is_flag=True
-)
+@click.option("--clear", help="Clear path to database file.", is_flag=True)
 @click.pass_context
-def ash_cli(ctx: click.Context, paper: str, database: str | Path | None, clear: bool):
+def ash_cli(
+    ctx: click.Context,
+    paper: str | None,
+    database: str | Path | None,
+    clear: bool,
+):
     """
     Simple program that runs Ash on PAPER using DATABASE.
     """
@@ -38,7 +41,9 @@ def ash_cli(ctx: click.Context, paper: str, database: str | Path | None, clear: 
             "Error: You must specify the path of a retractions database with --database."
         )
         ctx.exit()
-    click.echo(f"Using database at {database}...")
+    click.echo(f"Database path: {database.resolve()}.")
+    if paper is None:
+        ctx.exit()
     print_basic_report(paper, database)
 
 
@@ -46,8 +51,9 @@ def locate_database(database: str | Path | None) -> Path | None:
     database = database or stored_database
     if database is None or database == "":
         return None
-    _ = config.write_value(table="database", key="path", value=database)
-    return Path(database)
+    database_path = Path(database).resolve()
+    _ = config.write_value(table="database", key="path", value=str(database_path))
+    return database_path
 
 
 def print_basic_report(paper_spec: str, database_spec: str | Path):

@@ -12,7 +12,7 @@
 
 ## Usage
 
-> [!WARNING]  
+> [!WARNING]
 > This is a work in progress. The API is subject to change.
 
 Get yourself a copy of the [Retraction Watch database](#retraction-watch-database),
@@ -35,6 +35,32 @@ db = ash.RetractionDatabase("./retractions.csv")
 paper = ash.Paper.from_path("./manuscript.docx")
 pprint(paper.report(db))
 ```
+
+## Terminal
+
+A rudimentary command line interface is currently included for your convenience:
+
+```
+$ ash
+Usage: ash [OPTIONS] [PAPER]
+
+  Simple program that runs Ash on PAPER using DATABASE.
+
+Options:
+  --database PATH  Path to retractions database file.
+  --clear          Clear path to database file.
+  --help           Show this message and exit.
+
+$ ash --database ./retractions.csv
+Database path: ./retractions.csv
+
+$ ash questionable_paper.docx
+Database path: ./retractions.csv
+{'dois': {'10.21105/joss.03440': {'Retracted': False}}, 'zombies': []}
+```
+
+The path of the database persists between sessions, so you'll likely need to specify it
+only the once.
 
 ## Notebook
 

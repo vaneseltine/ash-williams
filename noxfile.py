@@ -61,7 +61,8 @@ def supported_pythons(classifiers_file: str | Path = "pyproject.toml"):
 
 @nox.session(python=False)
 def lint_black(session: Session):
-    run(session, "python -m black .")
+    files = [path for path in Path(__file__).parent.glob("*/*.py")]
+    _ = session.run("python", "-m", "black", *files)
 
 
 @nox.session(python=False)

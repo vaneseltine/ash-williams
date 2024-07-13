@@ -97,9 +97,16 @@ class DOI:
     @classmethod
     def _exists_at_api(cls, doi: str) -> bool | None:
         url = cls.API_URL.format(doi=doi)
-        resp = http.request("HEAD", url)
-        existence = cls.API_RESPONSE_MAP.get(resp.status)
-        logger.info(f"{doi} | {url} | {resp.status} = {existence}")
+        logger.info(f"{doi} | {url} | ...")
+        try:
+            resp = http.request("HEAD", url)
+            resp_status = resp.status
+            existence = cls.API_RESPONSE_MAP.get(resp.status)
+        except Exception as err:  # pylint: disable=broad-exception-caught
+            logger.info(str(err))
+            resp_status = "Connection to API failed"
+            existence = None
+        logger.info(f"{doi} | {url} | {resp_status} = {existence}")
         return existence
 
     @classmethod

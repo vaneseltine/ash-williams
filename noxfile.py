@@ -11,6 +11,7 @@ import nox
 from nox.sessions import Session
 
 CODE_DIR = "ash"
+
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 IN_CI = os.getenv("CI", "").lower() == "true"
 

@@ -4,13 +4,22 @@
 
 <h2 align="center">Ash: finding the Evil Dead in the scientific literature</h2>
 
-> There is an urgent need for reviewers and editorial boards to check the reference list of submitted manuscripts, to prevent the spreading of zombie literature. [(Bucci 2019)](https://doi.org/10.1038/s41419-019-1450-3)
+> There is an urgent need for reviewers and editorial boards to check the reference list
+> of submitted manuscripts, to prevent the spreading of zombie literature.
+> [(Bucci 2019)](https://doi.org/10.1038/s41419-019-1450-3)
 
-> ‘Zombie papers’ just won’t die. [(Brainard 2022)](https://doi.org/10.1126/science.add6848)
+> ‘Zombie papers’ just won’t die.
+> [(Brainard 2022)](https://doi.org/10.1126/science.add6848)
 
-> I'm afraid I'm gonna have to ask you to leave the store. [(Williams 1992)](https://www.imdb.com/title/tt0106308/)
+> I'm afraid I'm gonna have to ask you to leave the store.
+> [(Williams 1992)](https://www.imdb.com/title/tt0106308/)
 
-## Usage
+## Demo website
+
+I've thrown together https://matvan.pythonanywhere.com as a basic demo of Ash,
+so you can get a sense of what we're talking about here.
+
+## Python package
 
 > [!WARNING]
 > This is a work in progress. The API is subject to change.
@@ -18,6 +27,7 @@
 Get yourself a copy of the [Retraction Watch database](#retraction-watch-database),
 get yourself a paper with some references in it,
 then try **Ash**.
+
 First install:
 
 ```bash
@@ -35,8 +45,6 @@ db = ash.RetractionDatabase("./retractions.csv")
 paper = ash.Paper.from_path("./manuscript.docx")
 pprint(paper.report(db))
 ```
-
-## Terminal
 
 A rudimentary command line interface is currently included for your convenience:
 
@@ -62,7 +70,7 @@ Database path: ./retractions.csv
 The path of the database persists between sessions, so you'll likely need to specify it
 only the once.
 
-## Notebook
+### Cloud Notebook
 
 For a full-fledged demonstration without any need to install on your own machine,
 examine this example notebook through Google Colab.
@@ -83,3 +91,7 @@ To download the latest data snapshot (~44 MB as of Jul 2024),
 simply add your email address to the following URL.
 The csv will automatically download:
 api.labs.crossref.org/data/retractionwatch?youremailhere@example.com
+
+The official home of Retraction Watch appears,
+at least as of July 2024,
+to continue to be [retractiondatabase.org](http://retractiondatabase.org).

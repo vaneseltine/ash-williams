@@ -14,9 +14,9 @@
 > I'm afraid I'm gonna have to ask you to leave the store.
 > [(Williams 1992)](https://www.imdb.com/title/tt0106308/)
 
-## Demo website
+## Website
 
-I've thrown together https://matvan.pythonanywhere.com as a basic demo of Ash,
+I've thrown together [undead.pub](https://www.undead.pub) as a basic demo of Ash,
 so you can get a sense of what we're talking about here.
 
 ## Python package

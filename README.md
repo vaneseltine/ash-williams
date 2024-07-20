@@ -16,7 +16,7 @@
 
 ## Website
 
-I've thrown together [undead.pub](https://www.undead.pub) as a basic demo of Ash,
+I've thrown together [www.undead.pub](https://www.undead.pub) as a basic demo of Ash,
 so you can get a sense of what we're talking about here.
 
 ## Python package

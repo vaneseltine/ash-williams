@@ -17,8 +17,8 @@ IN_CI = os.getenv("CI", "").lower() == "true"
 
 
 nox.options.default_venv_backend = "venv"
-# nox.options.reuse_existing_virtualenvs = "no"
-nox.options.error_on_external_run = "yes"
+# nox.options.reuse_existing_virtualenvs = False
+nox.options.error_on_external_run = True
 
 # Default run
 nox.options.sessions = [
